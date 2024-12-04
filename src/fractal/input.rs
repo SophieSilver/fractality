@@ -112,11 +112,9 @@ fn fractal_input_system(
         let cursor_normalized_pos = cursor_centered_pos * vec2(1.0, -1.0) / pixels_per_unit;
 
         let cursor_world_pos = cursor_normalized_pos * fractal.scale + fractal.offset;
-        info!(%cursor_normalized_pos, "");
-        info!(%cursor_world_pos, "");
         fractal.scale *= exp2(-pixels_scrolled / PIXELS_PER_HALF_SCALE);
-        // cursor_world_pos - cursor_normalized_pos * scale0 = offset0
-        // cursor_world_pos - cursor_normalized_pos * scale1 = offset1
+        // if we rearrange the cursor_world pos equation we get this
+        // offset cursor_world_pos - cursor_normalized_pos * scale
         fractal.offset = cursor_world_pos - cursor_normalized_pos * fractal.scale;
     }
 }

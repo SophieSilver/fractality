@@ -25,13 +25,13 @@ pub fn fps_title_system(mut window: Query<&mut Window>, diagnostics: ResMut<Diag
     let Ok(mut window) = window.get_single_mut() else {
         return;
     };
-    let Some(fps) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) else {
+
+    let Some(fps) = diagnostics
+        .get(&FrameTimeDiagnosticsPlugin::FPS)
+        .and_then(|d| d.average())
+    else {
         return;
     };
 
-    let Some(average_fps) = fps.average() else {
-        return;
-    };
-
-    window.title = format!("Fractality ({average_fps:.2} FPS)");
+    window.title = format!("Fractality ({fps:.2} FPS)");
 }
