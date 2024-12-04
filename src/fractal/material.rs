@@ -32,11 +32,20 @@ pub fn create_fractal_mesh() -> Mesh {
     )
 }
 
-#[derive(Debug, Clone, Copy, Default, Asset, TypePath, AsBindGroup, ShaderType)]
+#[derive(Debug, Clone, Copy, Asset, TypePath, AsBindGroup, ShaderType)]
 #[uniform(0, FractalMaterial)] // it's its own uniform
 pub struct FractalMaterial {
-    scale: f32,
-    offset: Vec2,
+    pub scale: f32,
+    pub offset: Vec2,
+}
+
+impl Default for FractalMaterial {
+    fn default() -> Self {
+        Self {
+            scale: 2.0,
+            offset: Default::default(),
+        }
+    }
 }
 
 impl Material2d for FractalMaterial {

@@ -1,9 +1,8 @@
-use bevy::{
-    prelude::*,
-    sprite::Material2dPlugin,
-};
+use bevy::{ecs::query::QuerySingleError, prelude::*, sprite::Material2dPlugin};
+use input::FractalInputPlugin;
 use material::{create_fractal_mesh, FractalMaterial};
 
+pub mod input;
 pub mod material;
 
 const FRACTAL_POSITION: u64 = 1419184817364816;
@@ -27,13 +26,27 @@ impl Plugin for FractalPlugin {
             });
         }
 
+        app.add_plugins(FractalInputPlugin);
         app.add_plugins(Material2dPlugin::<FractalMaterial>::default());
         app.add_systems(Startup, add_fractal_to_world);
+        app.add_systems(PostUpdate, update_fractal_material);
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Component)]
-pub struct Fractal;
+#[derive(Debug, Clone, Copy, PartialEq, Component)]
+pub struct Fractal {
+    pub scale: f32,
+    pub offset: Vec2,
+}
+
+impl Default for Fractal {
+    fn default() -> Self {
+        Self {
+            scale: 2.0,
+            offset: Vec2::ZERO,
+        }
+    }
+}
 
 pub fn add_fractal_to_world(
     mut commands: Commands,
@@ -43,7 +56,25 @@ pub fn add_fractal_to_world(
     let mesh = meshes.add(create_fractal_mesh());
     let material = materials.add(FractalMaterial::default());
 
-    commands.spawn((Fractal, Mesh2d(mesh), MeshMaterial2d(material)));
+    commands.spawn((Fractal::default(), Mesh2d(mesh), MeshMaterial2d(material)));
 }
 
+pub fn update_fractal_material(
+    query: Query<(&Fractal, &MeshMaterial2d<FractalMaterial>), Changed<Fractal>>,
+    mut materials: ResMut<Assets<FractalMaterial>>,
+) {
+    let (fractal, material) = match query.get_single() {
+        Ok(value) => value,
+        Err(QuerySingleError::NoEntities(_)) => return,
+        Err(e) => panic!("{e}"),
+    };
+    debug!(?fractal, "Updating fractal");
 
+    let Some(material) = materials.get_mut(material.0.id()) else {
+        warn!("Failed to find the fractal material asset");
+        return;
+    };
+
+    material.scale = fractal.scale;
+    material.offset = fractal.offset;
+}

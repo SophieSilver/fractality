@@ -33,10 +33,13 @@ fn fragment(in: FragmentInput) -> @location(0) vec4f {
     let x = in.world_pos.x * material.scale + material.offset.x;
     let y = in.world_pos.y * material.scale + material.offset.y;
 
-    var zr = x;
-    var zi = y;
-    let cr = mix(0.1, x, 0.6);
-    let ci = mix(0.6, y, 0.6);
+    var zr = 0.0;
+    var zi = 0.0;
+    let cr = x;
+    let ci = y;
+
+    let first_half = 2576980378u;
+    let second_half = 1069128089u;
 
     const iters: u32 = 100;
     var i: u32;
@@ -45,19 +48,20 @@ fn fragment(in: FragmentInput) -> @location(0) vec4f {
         let new_zi = 2 * zr * zi + ci;
         zr = new_zr;
         zi = new_zi;
-
-        if zr * zr + zi * zi > 4.0 {
+        if new_zr * new_zr + new_zi * new_zi > 4.0 {
             break;
         }
     }
 
     var grad: vec3f;
-    let dist = f32(sqrt(zr * zr + zi * zi)) - 2.0;
-    let curved_dist = 1 - exp(4.0 * -dist);
     if i == iters {
         grad = vec3(0.0, 0.0, 0.0);
     } else {
-        grad = mix(vec3(0.001), vec3(1.0), pow(saturate((f32(i) + 1 - saturate(dist)) / f32(iters)), 1.0));
+        let dist = sqrt(zr * zr + zi * zi) - 2.0;
+        let value = f32(i) + 1.0 - saturate(dist);
+        let t = value / f32(iters);
+        let curved_t = pow(t, 1.5);
+        grad = mix(vec3(0.001), vec3(1.0), curved_t);
     }
     let color = grad * vec3(1.0);
 

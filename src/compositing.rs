@@ -1,4 +1,8 @@
-use bevy::{prelude::*, render::camera::ScalingMode};
+use bevy::{
+    math::uvec2,
+    prelude::*,
+    render::camera::{ScalingMode, SubCameraView, Viewport},
+};
 
 /// Plugin responsible for managing different viewports of the app
 pub struct CompositingPlugin;
@@ -26,5 +30,15 @@ fn fractal_camera_projection() -> OrthographicProjection {
 }
 
 pub fn add_fractal_camera(mut commands: Commands) {
-    commands.spawn(FractalCamera);
+    commands.spawn((
+        FractalCamera,
+        Camera {
+            // viewport: Some(Viewport {
+            //     physical_position: uvec2(0, 0),
+            //     physical_size: uvec2(800, 600),
+            //     depth: 0.0..1.0,
+            // }),
+            ..default()
+        },
+    ));
 }
