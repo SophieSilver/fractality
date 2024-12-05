@@ -5,11 +5,9 @@ use bevy::{
     ecs::query::QuerySingleError, prelude::*, render::view::RenderLayers, sprite::Material2dPlugin,
     time::common_conditions,
 };
-use material::{FractalMaterial, FractalMaterialPlugin};
-use render::{create_fractal_mesh, FractalRenderingPlugin, FRACTAL_LAYER};
+use material::{create_fractal_mesh, FractalMaterial, FractalMaterialPlugin};
 
 pub mod material;
-pub mod render;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct FractalPlugin;
@@ -17,7 +15,6 @@ pub struct FractalPlugin;
 impl Plugin for FractalPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(FractalMaterialPlugin);
-        app.add_plugins(FractalRenderingPlugin);
         app.add_systems(Startup, add_fractal_to_world);
     }
 }
@@ -45,10 +42,5 @@ pub fn add_fractal_to_world(
     let mesh = meshes.add(create_fractal_mesh());
     let material = materials.add(FractalMaterial::default());
 
-    commands.spawn((
-        Fractal::default(),
-        Mesh2d(mesh),
-        MeshMaterial2d(material),
-        RenderLayers::layer(FRACTAL_LAYER),
-    ));
+    commands.spawn((Fractal::default(), Mesh2d(mesh), MeshMaterial2d(material)));
 }
