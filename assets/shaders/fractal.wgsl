@@ -7,7 +7,7 @@ struct FractalMaterial {
 
 struct FractalVertexInput {
     @builtin(instance_index) index: u32,
-    @location(0) position: vec2<f32>
+    @location(0) position: vec2f
 }
 
 struct FragmentInput {
@@ -41,7 +41,7 @@ fn fragment(in: FragmentInput) -> @location(0) vec4f {
     let first_half = 2576980378u;
     let second_half = 1069128089u;
 
-    const iters: u32 = 100;
+    const iters: u32 = 1000;
     var i: u32;
     for (i = 0u; i < iters; i += 1u) {
         let new_zr = zr * zr - zi * zi + cr;
@@ -57,10 +57,10 @@ fn fragment(in: FragmentInput) -> @location(0) vec4f {
     if i == iters {
         grad = vec3(0.0, 0.0, 0.0);
     } else {
-        let dist = sqrt(zr * zr + zi * zi) - 2.0;
+        let dist = (sqrt(zr * zr + zi * zi) - 2.0);
         let value = f32(i) + 1.0 - saturate(dist);
         let t = value / f32(iters);
-        let curved_t = pow(t, 1.5);
+        let curved_t = pow(t, 1.0);
         grad = mix(vec3(0.001), vec3(1.0), curved_t);
     }
     let color = grad * vec3(1.0);

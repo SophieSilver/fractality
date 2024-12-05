@@ -1,35 +1,24 @@
-use bevy::{ecs::query::QuerySingleError, prelude::*, sprite::Material2dPlugin};
-use input::FractalInputPlugin;
-use material::{create_fractal_mesh, FractalMaterial};
+use std::time::Duration;
 
-pub mod input;
+use crate::{compositing::ViewportCamera, input::FractalInputPlugin};
+use bevy::{
+    ecs::query::QuerySingleError, prelude::*, render::view::RenderLayers, sprite::Material2dPlugin,
+    time::common_conditions,
+};
+use material::{FractalMaterial, FractalMaterialPlugin};
+use render::{create_fractal_mesh, FractalRenderingPlugin, FRACTAL_LAYER};
+
 pub mod material;
-
-const FRACTAL_POSITION: u64 = 1419184817364816;
-
-const FRACTAL_SHADER_HANDLE: Handle<Shader> =
-    Handle::weak_from_u128(0xca66eb26_69e9_4e00_8760_ba2d0019c452);
+pub mod render;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct FractalPlugin;
 
 impl Plugin for FractalPlugin {
     fn build(&self, app: &mut App) {
-        // embed the shader in the release executable
-        if !cfg!(debug_assertions) {
-            let mut shaders = app.world_mut().resource_mut::<Assets<Shader>>();
-            shaders.get_or_insert_with(FRACTAL_SHADER_HANDLE.id(), || {
-                Shader::from_wgsl(
-                    include_str!("../assets/shaders/fractal.wgsl"),
-                    "assets/shaders/fractal.wgsl",
-                )
-            });
-        }
-
-        app.add_plugins(FractalInputPlugin);
-        app.add_plugins(Material2dPlugin::<FractalMaterial>::default());
+        app.add_plugins(FractalMaterialPlugin);
+        app.add_plugins(FractalRenderingPlugin);
         app.add_systems(Startup, add_fractal_to_world);
-        app.add_systems(PostUpdate, update_fractal_material);
     }
 }
 
@@ -56,25 +45,10 @@ pub fn add_fractal_to_world(
     let mesh = meshes.add(create_fractal_mesh());
     let material = materials.add(FractalMaterial::default());
 
-    commands.spawn((Fractal::default(), Mesh2d(mesh), MeshMaterial2d(material)));
-}
-
-pub fn update_fractal_material(
-    query: Query<(&Fractal, &MeshMaterial2d<FractalMaterial>), Changed<Fractal>>,
-    mut materials: ResMut<Assets<FractalMaterial>>,
-) {
-    let (fractal, material) = match query.get_single() {
-        Ok(value) => value,
-        Err(QuerySingleError::NoEntities(_)) => return,
-        Err(e) => panic!("{e}"),
-    };
-    debug!(?fractal, "Updating fractal");
-
-    let Some(material) = materials.get_mut(material.0.id()) else {
-        warn!("Failed to find the fractal material asset");
-        return;
-    };
-
-    material.scale = fractal.scale;
-    material.offset = fractal.offset;
+    commands.spawn((
+        Fractal::default(),
+        Mesh2d(mesh),
+        MeshMaterial2d(material),
+        RenderLayers::layer(FRACTAL_LAYER),
+    ));
 }

@@ -17,6 +17,7 @@ bevy = { version = "0.15.0", default-features = false, features = [
     "x11",
     "wayland",
 ] }
+bevy_egui = "0.31.1"
 bevy_image = { version = "0.15.0", default-features = false }
 
 

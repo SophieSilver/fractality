@@ -9,16 +9,16 @@ pub struct CompositingPlugin;
 
 impl Plugin for CompositingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, add_fractal_camera);
+        app.add_systems(Startup, add_viewport_camera);
     }
 }
 
-/// Camera responsible for compositing the final fractal to the screen
+/// Camera responsible for compositing the final image of the fractal to the screen
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Component)]
 #[require(Camera2d, OrthographicProjection(fractal_camera_projection))]
-pub struct FractalCamera;
+pub struct ViewportCamera;
 
-fn fractal_camera_projection() -> OrthographicProjection {
+pub fn fractal_camera_projection() -> OrthographicProjection {
     OrthographicProjection {
         scale: 2.0,
         scaling_mode: ScalingMode::AutoMax {
@@ -29,16 +29,6 @@ fn fractal_camera_projection() -> OrthographicProjection {
     }
 }
 
-pub fn add_fractal_camera(mut commands: Commands) {
-    commands.spawn((
-        FractalCamera,
-        Camera {
-            // viewport: Some(Viewport {
-            //     physical_position: uvec2(0, 0),
-            //     physical_size: uvec2(800, 600),
-            //     depth: 0.0..1.0,
-            // }),
-            ..default()
-        },
-    ));
+pub fn add_viewport_camera(mut commands: Commands) {
+    commands.spawn(ViewportCamera);
 }
