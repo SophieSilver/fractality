@@ -3,6 +3,7 @@
 struct FractalMaterial {
     scale: f32,
     offset: vec2f,
+    initial_z: vec2f,
 }
 
 struct FractalVertexInput {
@@ -33,15 +34,15 @@ fn fragment(in: FragmentInput) -> @location(0) vec4f {
     let x = in.world_pos.x * material.scale + material.offset.x;
     let y = in.world_pos.y * material.scale + material.offset.y;
 
-    var zr = 0.0;
-    var zi = 0.0;
+    var zr = material.initial_z.x;
+    var zi = material.initial_z.y;
     let cr = x;
     let ci = y;
 
     let first_half = 2576980378u;
     let second_half = 1069128089u;
 
-    const iters: u32 = 1000;
+    const iters: u32 = 500;
     var i: u32;
     for (i = 0u; i < iters; i += 1u) {
         let new_zr = zr * zr - zi * zi + cr;

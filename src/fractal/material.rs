@@ -56,13 +56,15 @@ pub fn create_fractal_mesh() -> Mesh {
 pub struct FractalMaterial {
     pub scale: f32,
     pub offset: Vec2,
+    pub initial_z: Vec2,
 }
 
 impl Default for FractalMaterial {
     fn default() -> Self {
         Self {
             scale: 2.0,
-            offset: Default::default(),
+            offset: default(),
+            initial_z: default(),
         }
     }
 }
@@ -115,7 +117,7 @@ impl Material2d for FractalMaterial {
 
 impl From<&FractalMaterial> for FractalMaterial {
     fn from(value: &FractalMaterial) -> Self {
-        value.clone()
+        *value
     }
 }
 
@@ -137,4 +139,5 @@ pub fn update_fractal_material(
 
     material.scale = fractal.scale;
     material.offset = fractal.offset;
+    material.initial_z = fractal.initial_z;
 }

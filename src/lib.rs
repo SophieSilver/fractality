@@ -4,3 +4,4 @@ pub mod compositing;
 pub mod fps_title;
 pub mod fractal;
 pub mod input;
+pub mod ui;

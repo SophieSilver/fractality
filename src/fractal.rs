@@ -23,6 +23,7 @@ impl Plugin for FractalPlugin {
 pub struct Fractal {
     pub scale: f32,
     pub offset: Vec2,
+    pub initial_z: Vec2,
 }
 
 impl Default for Fractal {
@@ -30,6 +31,7 @@ impl Default for Fractal {
         Self {
             scale: 2.0,
             offset: Vec2::ZERO,
+            initial_z: Vec2::ZERO,
         }
     }
 }

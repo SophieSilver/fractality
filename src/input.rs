@@ -8,11 +8,11 @@ use bevy::{
     },
     log::{error, info},
     math::{ops::exp2, vec2, UVec2, Vec2},
-    prelude::{Camera, MouseButton, Query, Res, ResMut, Resource, With},
-    window::Window,
+    prelude::{Camera, IntoSystemConfigs, MouseButton, Query, Res, ResMut, Resource, With},
+    window::{PrimaryWindow, Window},
 };
 
-use crate::compositing::ViewportCamera;
+use crate::{compositing::ViewportCamera, ui::UiSystemSet};
 
 use crate::fractal::Fractal;
 
@@ -25,7 +25,7 @@ pub struct FractalInputPlugin;
 impl Plugin for FractalInputPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.init_resource::<FractalInputState>();
-        app.add_systems(Update, fractal_input_system);
+        app.add_systems(Update, fractal_input_system.after(UiSystemSet));
     }
 }
 
@@ -44,7 +44,7 @@ pub struct FractalInputState {
 
 pub fn fractal_input_system(
     mut camera: Query<&Camera, With<ViewportCamera>>,
-    window: Query<&Window>,
+    window: Query<&Window, With<PrimaryWindow>>,
     mut fractal: Query<&mut Fractal>,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     mouse_wheel: Res<AccumulatedMouseScroll>,

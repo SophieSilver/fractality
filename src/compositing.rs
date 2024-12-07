@@ -1,15 +1,22 @@
 use bevy::{
     math::uvec2,
     prelude::*,
-    render::camera::{ScalingMode, SubCameraView, Viewport},
+    render::camera::{camera_system, ScalingMode, SubCameraView, Viewport},
 };
+
+use crate::ui::{NonUiArea, UiSystemSet};
 
 /// Plugin responsible for managing different viewports of the app
 pub struct CompositingPlugin;
 
 impl Plugin for CompositingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, add_viewport_camera);
+        app.add_systems(Startup, add_viewport_camera).add_systems(
+            PostUpdate,
+            resize_viewport
+                .before(camera_system::<OrthographicProjection>)
+                .run_if(resource_changed::<NonUiArea>),
+        );
     }
 }
 
@@ -31,4 +38,15 @@ pub fn fractal_camera_projection() -> OrthographicProjection {
 
 pub fn add_viewport_camera(mut commands: Commands) {
     commands.spawn(ViewportCamera);
+}
+
+pub fn resize_viewport(mut camera: Query<&mut Camera, With<ViewportCamera>>, area: Res<NonUiArea>) {
+    debug!(area = ?area.0, "Resizing viewport");
+    let mut camera = camera.single_mut();
+
+    camera.viewport = Some(Viewport {
+        physical_position: area.min,
+        physical_size: area.size(),
+        depth: 0.0..1.0,
+    })
 }

@@ -2,7 +2,7 @@
 use bevy::{prelude::*, render::prelude::*};
 use fractality::{
     compositing::CompositingPlugin, fps_title::FpsTitlePlugin, fractal::FractalPlugin,
-    input::FractalInputPlugin,
+    input::FractalInputPlugin, ui::UiPlugin,
 };
 
 fn main() {
@@ -13,6 +13,7 @@ fn main() {
         FractalPlugin,
         FractalInputPlugin,
         CompositingPlugin,
+        UiPlugin,
     ))
     .add_systems(Startup, initialize);
     app.run();
