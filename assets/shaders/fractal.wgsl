@@ -16,6 +16,11 @@ struct FragmentInput {
     @interpolate(linear) @location(0) world_pos: vec2f,
 }
 
+struct FractalResult {
+    exit_iteration: u32,
+    final_z: vec2f,
+}
+
 @group(2) @binding(0) var<uniform> material: FractalMaterial;
 
 @vertex
@@ -27,44 +32,64 @@ fn vertex(in: FractalVertexInput) -> FragmentInput {
     return out;
 }
 
+fn fractal(z: vec2f, c: vec2f) -> FractalResult {
+    var out: FractalResult;
+
+    const max_iters = 250u;
+    const escape_radius = 2.0;
+
+    let r_squared = escape_radius * escape_radius;
+
+    var zr = z.x;
+    var zi = z.y;
+    let cr = c.x;
+    let ci = c.y;
+
+    var i: u32;
+    for (i = 0u; i < max_iters; i += 1u) {
+        let new_zr = zr * zr - zi * zi + cr;
+        let new_zi = 2 * zr * zi + ci;
+        zr = new_zr;
+        zi = new_zi;
+
+        if new_zr * new_zr + new_zi * new_zi > 4.0 {
+            break;
+        }
+    }
+
+    out.exit_iteration = i;
+    out.final_z = vec2(zr, zi);
+    return out;
+}
+
+fn fractal_res_to_color(res: FractalResult) -> vec3f {
+    const max_iters = 250u;
+    const escape_radius = 2.0;
+    const curve_exp = 1.0;
+
+    if res.exit_iteration == max_iters {
+        return vec3(0.0, 0.0, 0.0);
+    } else {
+        let x = res.final_z.x;
+        let y = res.final_z.y;
+        let dist = sqrt(x * x + y * y) - escape_radius;
+        let value = f32(res.exit_iteration) + 1.0 - saturate(dist);
+        let t = value / f32(max_iters);
+        let curved_t = pow(t, curve_exp);
+        return mix(vec3(0.001), vec3(1.0), curved_t);
+    }
+}
+
 @fragment
 fn fragment(in: FragmentInput) -> @location(0) vec4f {
     // let x = f64(in.world_pos.x) * 0.000002 - 1.0;
     // let y = f64(in.world_pos.y) * 0.000002 + 0.3033229;
     let x = in.world_pos.x * material.scale + material.offset.x;
     let y = in.world_pos.y * material.scale + material.offset.y;
+    const iters = 250u;
 
-    var zr = material.initial_z.x;
-    var zi = material.initial_z.y;
-    let cr = x;
-    let ci = y;
+    let res = fractal(material.initial_z, vec2(x, y));
 
-    let first_half = 2576980378u;
-    let second_half = 1069128089u;
 
-    const iters: u32 = 500;
-    var i: u32;
-    for (i = 0u; i < iters; i += 1u) {
-        let new_zr = zr * zr - zi * zi + cr;
-        let new_zi = 2 * zr * zi + ci;
-        zr = new_zr;
-        zi = new_zi;
-        if new_zr * new_zr + new_zi * new_zi > 4.0 {
-            break;
-        }
-    }
-
-    var grad: vec3f;
-    if i == iters {
-        grad = vec3(0.0, 0.0, 0.0);
-    } else {
-        let dist = (sqrt(zr * zr + zi * zi) - 2.0);
-        let value = f32(i) + 1.0 - saturate(dist);
-        let t = value / f32(iters);
-        let curved_t = pow(t, 1.0);
-        grad = mix(vec3(0.001), vec3(1.0), curved_t);
-    }
-    let color = grad * vec3(1.0);
-
-    return vec4(color, 1.0);
+    return vec4(fractal_res_to_color(res), 1.0);
 }
