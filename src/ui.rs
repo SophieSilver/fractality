@@ -1,12 +1,15 @@
 use bevy::{input::mouse::AccumulatedMouseScroll, math::uvec2, prelude::*, window::PrimaryWindow};
 use bevy_egui::{
-    egui::{self, DragValue, Grid, Label, RichText, Visuals},
+    egui::{self, DragValue, Grid},
     EguiContext, EguiContexts, EguiPlugin, EguiSettings,
 };
+use complex_parameter::ComplexParameterInput;
 
 use crate::fractal::Fractal;
+pub mod complex_parameter;
 
-const UI_SCALE: f32 = 1.5;
+const UI_SCALE: f32 = 1.25;
+const DRAG_SENSITIVITY: f32 = 0.0025;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct UiPlugin;
@@ -50,31 +53,16 @@ pub fn ui_system(
     // contexts.ctx_mut().set_zoom_factor(zoom_factor);
     let ctx = contexts.ctx_mut();
     // ctx.style_mut(|s| {
-    let mut fractal = fractal.single_mut();
+    let fractal = fractal.single_mut();
     // });
 
     egui::SidePanel::right("UiPanel")
         .resizable(false)
         .show(ctx, |ui| {
-            ui.allocate_space(egui::vec2(200.0, 0.0));
+            let initial_z = fractal.map_unchanged(|f| &mut f.initial_z);
             ui.label("Initial Z:");
-            ui.indent(123, |ui| {
-                Grid::new("Complex input grid")
-                    .min_col_width(50.0)
-                    .show(ui, |ui| {
-                        let mut new_z = fractal.initial_z;
-                        ui.label("real:");
-                        let mut changed =
-                            ui.add(DragValue::new(&mut new_z.x).speed(0.005)).changed();
-                        ui.end_row();
-                        ui.label("imaginary:");
-                        changed |= ui.add(DragValue::new(&mut new_z.y).speed(0.005)).changed();
-                        ui.end_row();
-
-                        if changed {
-                            fractal.initial_z = new_z;
-                        }
-                    });
+            ui.indent(ui.next_auto_id(), |ui| {
+                ui.add(ComplexParameterInput(initial_z))
             });
         });
 

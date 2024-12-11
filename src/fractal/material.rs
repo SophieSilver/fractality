@@ -1,6 +1,7 @@
 use bevy::{
     asset::RenderAssetUsages,
     ecs::query::QuerySingleError,
+    math::{ivec2, uvec2},
     prelude::*,
     render::{
         mesh::{
@@ -15,10 +16,17 @@ use bevy::{
     sprite::{AlphaMode2d, Material2d, Material2dKey, Material2dPlugin},
 };
 
-use super::Fractal;
+use crate::fractal::parameters::Parameter;
+
+use super::{parameters::ComplexParameter, Fractal};
 
 const FRACTAL_SHADER_HANDLE: Handle<Shader> =
     Handle::weak_from_u128(0xca66eb26_69e9_4e00_8760_ba2d0019c452);
+
+const Z_R_VALUE_INDEX: u32 = 0;
+const Z_I_VALUE_INDEX: u32 = 1;
+const PIXEL_X_INDEX: u32 = 2;
+const PIXEL_Y_INDEX: u32 = 3;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct FractalMaterialPlugin;
@@ -56,7 +64,8 @@ pub fn create_fractal_mesh() -> Mesh {
 pub struct FractalMaterial {
     pub scale: f32,
     pub offset: Vec2,
-    pub initial_z: Vec2,
+    pub initial_z_values: Vec2,
+    pub initial_z_indices: UVec2,
 }
 
 impl Default for FractalMaterial {
@@ -64,7 +73,8 @@ impl Default for FractalMaterial {
         Self {
             scale: 2.0,
             offset: default(),
-            initial_z: default(),
+            initial_z_values: default(),
+            initial_z_indices: uvec2(Z_R_VALUE_INDEX, Z_I_VALUE_INDEX),
         }
     }
 }
@@ -139,5 +149,49 @@ pub fn update_fractal_material(
 
     material.scale = fractal.scale;
     material.offset = fractal.offset;
-    material.initial_z = fractal.initial_z;
+    load_complex_param(
+        fractal.initial_z,
+        Z_R_VALUE_INDEX,
+        Z_I_VALUE_INDEX,
+        &mut material.initial_z_values,
+        &mut material.initial_z_indices,
+    );
+}
+
+fn load_complex_param(
+    param: ComplexParameter,
+    real_index: u32,
+    imag_index: u32,
+    value_target: &mut Vec2,
+    index_target: &mut UVec2,
+) {
+    load_parameter(
+        param.real,
+        real_index,
+        &mut value_target.x,
+        &mut index_target.x,
+    );
+
+    load_parameter(
+        param.imaginary,
+        imag_index,
+        &mut value_target.y,
+        &mut index_target.y,
+    );
+}
+
+fn load_parameter(
+    param: Parameter,
+    value_index: u32,
+    value_target: &mut f32,
+    index_target: &mut u32,
+) {
+    match param {
+        Parameter::Value(c) => {
+            *value_target = c;
+            *index_target = value_index;
+        }
+        Parameter::PixelX => *index_target = PIXEL_X_INDEX,
+        Parameter::PixelY => *index_target = PIXEL_Y_INDEX,
+    }
 }

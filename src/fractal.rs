@@ -6,8 +6,10 @@ use bevy::{
     time::common_conditions,
 };
 use material::{create_fractal_mesh, FractalMaterial, FractalMaterialPlugin};
+use parameters::ComplexParameter;
 
 pub mod material;
+pub mod parameters;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct FractalPlugin;
@@ -23,7 +25,7 @@ impl Plugin for FractalPlugin {
 pub struct Fractal {
     pub scale: f32,
     pub offset: Vec2,
-    pub initial_z: Vec2,
+    pub initial_z: ComplexParameter,
 }
 
 impl Default for Fractal {
@@ -31,7 +33,7 @@ impl Default for Fractal {
         Self {
             scale: 2.0,
             offset: Vec2::ZERO,
-            initial_z: Vec2::ZERO,
+            initial_z: default(),
         }
     }
 }

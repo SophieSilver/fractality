@@ -1,9 +1,17 @@
 #import bevy_sprite::mesh2d_functions::mesh2d_position_world_to_clip;
 
+const Z_R_VALUE_INDEX: u32 = 0;
+const Z_I_VALUE_INDEX: u32 = 1;
+const PIXEL_X_INDEX: u32 = 2;
+const PIXEL_Y_INDEX: u32 = 3;
+
+const PARAM_ARRAY_SIZE: u32 = 16;
+
 struct FractalMaterial {
     scale: f32,
     offset: vec2f,
-    initial_z: vec2f,
+    initial_z_values: vec2f,
+    initial_z_indices: vec2u,
 }
 
 struct FractalVertexInput {
@@ -21,6 +29,11 @@ struct FractalResult {
     final_z: vec2f,
 }
 
+struct FractalParams {
+    z: vec2f,
+    c: vec2f,
+}
+
 @group(2) @binding(0) var<uniform> material: FractalMaterial;
 
 @vertex
@@ -32,7 +45,38 @@ fn vertex(in: FractalVertexInput) -> FragmentInput {
     return out;
 }
 
-fn fractal(z: vec2f, c: vec2f) -> FractalResult {
+@fragment
+fn fragment(in: FragmentInput) -> @location(0) vec4f {
+    // let x = f64(in.world_pos.x) * 0.000002 - 1.0;
+    // let y = f64(in.world_pos.y) * 0.000002 + 0.3033229;
+    let x = in.world_pos.x * material.scale + material.offset.x;
+    let y = in.world_pos.y * material.scale + material.offset.y;
+    const iters = 250u;
+    let params = get_fractal_params(x, y);
+    let res = fractal(params);
+
+
+    return vec4(fractal_res_to_color(res), 1.0);
+}
+
+fn get_fractal_params(x: f32, y: f32) -> FractalParams {
+    var param_array: array<f32, PARAM_ARRAY_SIZE>;
+    param_array[Z_R_VALUE_INDEX] = material.initial_z_values.x;
+    param_array[Z_I_VALUE_INDEX] = material.initial_z_values.y;
+    param_array[PIXEL_X_INDEX] = x;
+    param_array[PIXEL_Y_INDEX] = y;
+
+    var out: FractalParams;
+    out.z.x = param_array[material.initial_z_indices.x];
+    out.z.y = param_array[material.initial_z_indices.y];
+    out.c = vec2(x, y);
+
+    return out;
+}
+
+fn fractal(params: FractalParams) -> FractalResult {
+    let z = params.z;
+    let c = params.c;
     var out: FractalResult;
 
     const max_iters = 250u;
@@ -78,18 +122,4 @@ fn fractal_res_to_color(res: FractalResult) -> vec3f {
         let curved_t = pow(t, curve_exp);
         return mix(vec3(0.001), vec3(1.0), curved_t);
     }
-}
-
-@fragment
-fn fragment(in: FragmentInput) -> @location(0) vec4f {
-    // let x = f64(in.world_pos.x) * 0.000002 - 1.0;
-    // let y = f64(in.world_pos.y) * 0.000002 + 0.3033229;
-    let x = in.world_pos.x * material.scale + material.offset.x;
-    let y = in.world_pos.y * material.scale + material.offset.y;
-    const iters = 250u;
-
-    let res = fractal(material.initial_z, vec2(x, y));
-
-
-    return vec4(fractal_res_to_color(res), 1.0);
 }
