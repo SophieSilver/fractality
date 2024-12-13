@@ -62,20 +62,15 @@ pub fn create_fractal_mesh() -> Mesh {
 #[derive(Debug, Clone, Copy, Asset, TypePath, AsBindGroup, ShaderType)]
 #[uniform(0, FractalMaterial)] // it's its own uniform
 pub struct FractalMaterial {
-    pub scale: f32,
-    pub offset: Vec2,
-    pub initial_z_values: Vec2,
-    pub initial_z_indices: UVec2,
+    iteration_count: u32,
+    scale: f32,
+    offset: Vec2,
+    initial_z: EncodedComplexParameter,
 }
 
 impl Default for FractalMaterial {
     fn default() -> Self {
-        Self {
-            scale: 2.0,
-            offset: default(),
-            initial_z_values: default(),
-            initial_z_indices: uvec2(Z_R_VALUE_INDEX, Z_I_VALUE_INDEX),
-        }
+        Fractal::default().into()
     }
 }
 
@@ -125,9 +120,25 @@ impl Material2d for FractalMaterial {
     }
 }
 
+// This is needed for shader type derives
 impl From<&FractalMaterial> for FractalMaterial {
     fn from(value: &FractalMaterial) -> Self {
         *value
+    }
+}
+
+impl From<Fractal> for FractalMaterial {
+    fn from(fractal: Fractal) -> Self {
+        Self {
+            iteration_count: fractal.iteration_count,
+            scale: fractal.scale,
+            offset: fractal.offset,
+            initial_z: encode_complex_parameter(
+                fractal.initial_z,
+                Z_R_VALUE_INDEX,
+                Z_I_VALUE_INDEX,
+            ),
+        }
     }
 }
 
@@ -147,51 +158,51 @@ pub fn update_fractal_material(
         return;
     };
 
-    material.scale = fractal.scale;
-    material.offset = fractal.offset;
-    load_complex_param(
-        fractal.initial_z,
-        Z_R_VALUE_INDEX,
-        Z_I_VALUE_INDEX,
-        &mut material.initial_z_values,
-        &mut material.initial_z_indices,
-    );
+    *material = (*fractal).into();
 }
 
-fn load_complex_param(
+#[derive(Debug, Clone, Copy, ShaderType)]
+struct EncodedComplexParameter {
+    real_value: f32,
+    real_index: u32,
+    imag_value: f32,
+    imag_index: u32,
+}
+
+#[derive(Debug, Clone, Copy, ShaderType)]
+struct EncodedParameter {
+    value: f32,
+    index: u32,
+}
+
+fn encode_complex_parameter(
     param: ComplexParameter,
     real_index: u32,
     imag_index: u32,
-    value_target: &mut Vec2,
-    index_target: &mut UVec2,
-) {
-    load_parameter(
-        param.real,
-        real_index,
-        &mut value_target.x,
-        &mut index_target.x,
-    );
-
-    load_parameter(
-        param.imaginary,
-        imag_index,
-        &mut value_target.y,
-        &mut index_target.y,
-    );
+) -> EncodedComplexParameter {
+    let real = encode_parameter(param.real, real_index);
+    let imaginary = encode_parameter(param.imaginary, imag_index);
+    EncodedComplexParameter {
+        real_value: real.value,
+        real_index: real.index,
+        imag_value: imaginary.value,
+        imag_index: imaginary.index,
+    }
 }
 
-fn load_parameter(
-    param: Parameter,
-    value_index: u32,
-    value_target: &mut f32,
-    index_target: &mut u32,
-) {
+fn encode_parameter(param: Parameter, value_index: u32) -> EncodedParameter {
     match param {
-        Parameter::Value(c) => {
-            *value_target = c;
-            *index_target = value_index;
-        }
-        Parameter::PixelX => *index_target = PIXEL_X_INDEX,
-        Parameter::PixelY => *index_target = PIXEL_Y_INDEX,
+        Parameter::Value(c) => EncodedParameter {
+            value: c,
+            index: value_index,
+        },
+        Parameter::PixelX => EncodedParameter {
+            value: 0.0,
+            index: PIXEL_X_INDEX,
+        },
+        Parameter::PixelY => EncodedParameter {
+            value: 0.0,
+            index: PIXEL_Y_INDEX,
+        },
     }
 }

@@ -23,6 +23,7 @@ impl Plugin for FractalPlugin {
 
 #[derive(Debug, Clone, Copy, PartialEq, Component)]
 pub struct Fractal {
+    pub iteration_count: u32,
     pub scale: f32,
     pub offset: Vec2,
     pub initial_z: ComplexParameter,
@@ -31,6 +32,7 @@ pub struct Fractal {
 impl Default for Fractal {
     fn default() -> Self {
         Self {
+            iteration_count: 100,
             scale: 2.0,
             offset: Vec2::ZERO,
             initial_z: default(),

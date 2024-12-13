@@ -7,11 +7,23 @@ const PIXEL_Y_INDEX: u32 = 3;
 
 const PARAM_ARRAY_SIZE: u32 = 16;
 
+struct ComplexParameter {
+    real_value: f32,
+    real_index: u32,
+    imag_value: f32,
+    imag_index: u32,
+}
+
+struct Parameter {
+    value: f32,
+    index: u32,
+}
+
 struct FractalMaterial {
+    iteration_count: u32,
     scale: f32,
     offset: vec2f,
-    initial_z_values: vec2f,
-    initial_z_indices: vec2u,
+    initial_z: ComplexParameter,
 }
 
 struct FractalVertexInput {
@@ -61,14 +73,14 @@ fn fragment(in: FragmentInput) -> @location(0) vec4f {
 
 fn get_fractal_params(x: f32, y: f32) -> FractalParams {
     var param_array: array<f32, PARAM_ARRAY_SIZE>;
-    param_array[Z_R_VALUE_INDEX] = material.initial_z_values.x;
-    param_array[Z_I_VALUE_INDEX] = material.initial_z_values.y;
+    param_array[Z_R_VALUE_INDEX] = material.initial_z.real_value;
+    param_array[Z_I_VALUE_INDEX] = material.initial_z.imag_value;
     param_array[PIXEL_X_INDEX] = x;
     param_array[PIXEL_Y_INDEX] = y;
 
     var out: FractalParams;
-    out.z.x = param_array[material.initial_z_indices.x];
-    out.z.y = param_array[material.initial_z_indices.y];
+    out.z.x = param_array[material.initial_z.real_index];
+    out.z.y = param_array[material.initial_z.imag_index];
     out.c = vec2(x, y);
 
     return out;
@@ -79,7 +91,6 @@ fn fractal(params: FractalParams) -> FractalResult {
     let c = params.c;
     var out: FractalResult;
 
-    const max_iters = 250u;
     const escape_radius = 2.0;
 
     let r_squared = escape_radius * escape_radius;
@@ -90,7 +101,7 @@ fn fractal(params: FractalParams) -> FractalResult {
     let ci = c.y;
 
     var i: u32;
-    for (i = 0u; i < max_iters; i += 1u) {
+    for (i = 0u; i < material.iteration_count; i += 1u) {
         let new_zr = zr * zr - zi * zi + cr;
         let new_zi = 2 * zr * zi + ci;
         zr = new_zr;
@@ -107,18 +118,17 @@ fn fractal(params: FractalParams) -> FractalResult {
 }
 
 fn fractal_res_to_color(res: FractalResult) -> vec3f {
-    const max_iters = 250u;
     const escape_radius = 2.0;
     const curve_exp = 1.0;
 
-    if res.exit_iteration == max_iters {
+    if res.exit_iteration == material.iteration_count {
         return vec3(0.0, 0.0, 0.0);
     } else {
         let x = res.final_z.x;
         let y = res.final_z.y;
         let dist = sqrt(x * x + y * y) - escape_radius;
         let value = f32(res.exit_iteration) + 1.0 - saturate(dist);
-        let t = value / f32(max_iters);
+        let t = value / f32(material.iteration_count);
         let curved_t = pow(t, curve_exp);
         return mix(vec3(0.001), vec3(1.0), curved_t);
     }
