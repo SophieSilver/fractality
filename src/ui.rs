@@ -1,6 +1,6 @@
 use bevy::{input::mouse::AccumulatedMouseScroll, math::uvec2, prelude::*, window::PrimaryWindow};
 use bevy_egui::{
-    egui::{self, DragValue, Grid},
+    egui::{self, DragValue, Frame, Grid, Margin, RichText, ScrollArea},
     EguiContext, EguiContexts, EguiPlugin, EguiSettings,
 };
 use complex_parameter::ComplexParameterInput;
@@ -50,19 +50,22 @@ pub fn ui_system(
     mut fractal: Query<&mut Fractal>,
     mut non_ui_area: ResMut<NonUiArea>,
 ) {
-    // contexts.ctx_mut().set_zoom_factor(zoom_factor);
     let ctx = contexts.ctx_mut();
-    // ctx.style_mut(|s| {
     let fractal = fractal.single_mut();
-    // });
 
     egui::SidePanel::right("UiPanel")
         .resizable(false)
+        .frame(Frame::side_top_panel(&ctx.style()).inner_margin(Margin::symmetric(10.0, 10.0)))
         .show(ctx, |ui| {
-            let initial_z = fractal.map_unchanged(|f| &mut f.initial_z);
-            ui.label("Initial Z:");
-            ui.indent(ui.next_auto_id(), |ui| {
-                ui.add(ComplexParameterInput(initial_z))
+            ScrollArea::vertical().show(ui, |ui| {
+                ui.label(RichText::new("Parameters").strong().size(18.0));
+                ui.separator();
+
+                let initial_z = fractal.map_unchanged(|f| &mut f.initial_z);
+                ui.label("Initial Z:");
+                ui.indent(ui.next_auto_id(), |ui| {
+                    ui.add(ComplexParameterInput(initial_z))
+                });
             });
         });
 

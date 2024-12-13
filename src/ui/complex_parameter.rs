@@ -61,7 +61,7 @@ fn show_parameter_input(ui: &mut Ui, mut value: Mut<Parameter>) {
     });
 
     if initial_param != modifiable_param {
-        debug!("Variant changed");
+        debug!("Complex parameter modified");
         *value = modifiable_param;
     }
 }
