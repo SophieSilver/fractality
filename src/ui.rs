@@ -4,9 +4,11 @@ use bevy_egui::{
     EguiContext, EguiContexts, EguiPlugin, EguiSettings,
 };
 use complex_parameter::ComplexParameterInput;
+use num_input::show_num_input;
 
 use crate::fractal::Fractal;
 pub mod complex_parameter;
+pub mod num_input;
 
 const UI_SCALE: f32 = 1.25;
 const DRAG_SENSITIVITY: f32 = 0.0025;
@@ -51,7 +53,7 @@ pub fn ui_system(
     mut non_ui_area: ResMut<NonUiArea>,
 ) {
     let ctx = contexts.ctx_mut();
-    let fractal = fractal.single_mut();
+    let mut fractal = fractal.single_mut();
 
     egui::SidePanel::right("UiPanel")
         .resizable(false)
@@ -60,6 +62,15 @@ pub fn ui_system(
             ScrollArea::vertical().show(ui, |ui| {
                 ui.label(RichText::new("Parameters").strong().size(18.0));
                 ui.separator();
+
+                ui.horizontal(|ui| {
+                    ui.label("Iteration Count:");
+                    show_num_input(
+                        ui,
+                        fractal.reborrow().map_unchanged(|f| &mut f.iteration_count),
+                        0.5, // TODO: exponential sensitivity?
+                    );
+                });
 
                 let initial_z = fractal.map_unchanged(|f| &mut f.initial_z);
                 ui.label("Initial Z:");
