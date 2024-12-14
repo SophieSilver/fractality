@@ -25,8 +25,10 @@ const FRACTAL_SHADER_HANDLE: Handle<Shader> =
 
 const Z_R_VALUE_INDEX: u32 = 0;
 const Z_I_VALUE_INDEX: u32 = 1;
-const PIXEL_X_INDEX: u32 = 2;
-const PIXEL_Y_INDEX: u32 = 3;
+const C_R_VALUE_INDEX: u32 = 2;
+const C_I_VALUE_INDEX: u32 = 3;
+const PIXEL_X_INDEX: u32 = 4;
+const PIXEL_Y_INDEX: u32 = 5;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct FractalMaterialPlugin;
@@ -66,6 +68,7 @@ pub struct FractalMaterial {
     scale: f32,
     offset: Vec2,
     initial_z: EncodedComplexParameter,
+    c: EncodedComplexParameter,
 }
 
 impl Default for FractalMaterial {
@@ -138,6 +141,7 @@ impl From<Fractal> for FractalMaterial {
                 Z_R_VALUE_INDEX,
                 Z_I_VALUE_INDEX,
             ),
+            c: encode_complex_parameter(fractal.c, C_R_VALUE_INDEX, C_I_VALUE_INDEX),
         }
     }
 }

@@ -8,11 +8,11 @@ use bevy_egui::{
     egui::{self, DragValue, Frame, Grid, Margin, RichText, ScrollArea},
     EguiContext, EguiContexts, EguiPlugin, EguiSettings,
 };
-use complex_parameter::ComplexParameterInput;
+use parameter::ComplexParameterInput;
 use num_input::show_num_input;
 
 use crate::fractal::Fractal;
-pub mod complex_parameter;
+pub mod parameter;
 pub mod num_input;
 
 const UI_SCALE: f32 = 1.25;
@@ -78,12 +78,19 @@ pub fn ui_system(
                         (current_iter_count + 1) as f32 * ITER_COUNT_SENSITIVITY_COEF,
                     );
                 });
+                ui.add_space(5.0);
 
-                let initial_z = fractal.map_unchanged(|f| &mut f.initial_z);
+                let initial_z = fractal.reborrow().map_unchanged(|f| &mut f.initial_z);
                 ui.label("Initial Z:");
                 ui.indent(ui.next_auto_id(), |ui| {
                     ui.add(ComplexParameterInput(initial_z))
                 });
+                ui.add_space(5.0);
+
+                let c = fractal.reborrow().map_unchanged(|f| &mut f.c);
+                ui.label("C:");
+                ui.indent(ui.next_auto_id(), |ui| ui.add(ComplexParameterInput(c)));
+                ui.add_space(5.0);
             });
         });
 

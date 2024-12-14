@@ -2,8 +2,10 @@
 
 const Z_R_VALUE_INDEX: u32 = 0;
 const Z_I_VALUE_INDEX: u32 = 1;
-const PIXEL_X_INDEX: u32 = 2;
-const PIXEL_Y_INDEX: u32 = 3;
+const C_R_VALUE_INDEX: u32 = 2;
+const C_I_VALUE_INDEX: u32 = 3;
+const PIXEL_X_INDEX: u32 = 4;
+const PIXEL_Y_INDEX: u32 = 5;
 
 const PARAM_ARRAY_SIZE: u32 = 16;
 
@@ -24,6 +26,7 @@ struct FractalMaterial {
     scale: f32,
     offset: vec2f,
     initial_z: ComplexParameter,
+    c: ComplexParameter,
 }
 
 struct FractalVertexInput {
@@ -75,13 +78,16 @@ fn get_fractal_params(x: f32, y: f32) -> FractalParams {
     var param_array: array<f32, PARAM_ARRAY_SIZE>;
     param_array[Z_R_VALUE_INDEX] = material.initial_z.real_value;
     param_array[Z_I_VALUE_INDEX] = material.initial_z.imag_value;
+    param_array[C_R_VALUE_INDEX] = material.c.real_value;
+    param_array[C_I_VALUE_INDEX] = material.c.imag_value;
     param_array[PIXEL_X_INDEX] = x;
     param_array[PIXEL_Y_INDEX] = y;
 
     var out: FractalParams;
     out.z.x = param_array[material.initial_z.real_index];
     out.z.y = param_array[material.initial_z.imag_index];
-    out.c = vec2(x, y);
+    out.c.x = param_array[material.c.real_index];
+    out.c.y = param_array[material.c.imag_index];
 
     return out;
 }
