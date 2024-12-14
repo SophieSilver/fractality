@@ -1,4 +1,9 @@
-use bevy::{input::mouse::AccumulatedMouseScroll, math::uvec2, prelude::*, window::PrimaryWindow};
+use bevy::{
+    input::mouse::AccumulatedMouseScroll,
+    math::{dvec2, uvec2, vec2},
+    prelude::*,
+    window::{CursorGrabMode, PrimaryWindow},
+};
 use bevy_egui::{
     egui::{self, DragValue, Frame, Grid, Margin, RichText, ScrollArea},
     EguiContext, EguiContexts, EguiPlugin, EguiSettings,
@@ -12,6 +17,7 @@ pub mod num_input;
 
 const UI_SCALE: f32 = 1.25;
 const DRAG_SENSITIVITY: f32 = 0.0025;
+const ITER_COUNT_SENSITIVITY_COEF: f32 = 0.0075;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct UiPlugin;
@@ -64,11 +70,12 @@ pub fn ui_system(
                 ui.separator();
 
                 ui.horizontal(|ui| {
+                    let current_iter_count = fractal.iteration_count;
                     ui.label("Iteration Count:");
                     show_num_input(
                         ui,
                         fractal.reborrow().map_unchanged(|f| &mut f.iteration_count),
-                        0.5, // TODO: exponential sensitivity?
+                        (current_iter_count + 1) as f32 * ITER_COUNT_SENSITIVITY_COEF,
                     );
                 });
 
