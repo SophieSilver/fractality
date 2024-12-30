@@ -29,7 +29,7 @@ struct FractalMaterial {
     c: ComplexParameter,
 }
 
-struct FractalVertexInput {
+struct VertexInput {
     @builtin(instance_index) index: u32,
     @location(0) position: vec2f
 }
@@ -52,7 +52,7 @@ struct FractalParams {
 @group(2) @binding(0) var<uniform> material: FractalMaterial;
 
 @vertex
-fn vertex(in: FractalVertexInput) -> FragmentInput {
+fn vertex(in: VertexInput) -> FragmentInput {
     var out: FragmentInput;
     out.clip_pos = mesh2d_position_world_to_clip(vec4(in.position.xy, 0.0, 1.0));
     out.world_pos = in.position.xy;
@@ -98,7 +98,8 @@ fn fractal(params: FractalParams) -> FractalResult {
     var out: FractalResult;
 
     const escape_radius = 2.0;
-
+    // z = (z^2 + c) / (z^2 - c)
+    // r: 
     let r_squared = escape_radius * escape_radius;
 
     var zr = z.x;
@@ -108,12 +109,30 @@ fn fractal(params: FractalParams) -> FractalResult {
 
     var i: u32;
     for (i = 0u; i < material.iteration_count; i += 1u) {
-        let new_zr = zr * zr - zi * zi + cr;
-        let new_zi = 2 * zr * zi + ci;
-        zr = new_zr;
-        zi = new_zi;
+        let num_real = zr * zr - zi * zi + cr;
+        let num_imag = 2 * zr * zi + ci;
+        let den_real = zr * zr - zi * zi - cr;
+        let den_imag = 2 * zr * zi - ci;
 
-        if new_zr * new_zr + new_zi * new_zi > 4.0 {
+        let denom2 = den_real * den_real + den_imag * den_imag;
+        var temp_r: f32;
+        var temp_i: f32;
+        if (denom2 == 0.0) {
+            temp_r = cr;
+            temp_i = ci;
+        } else {
+            temp_r = (num_real * den_real + num_imag * num_imag) / denom2;
+            temp_i = (num_imag * den_real - num_real * den_imag) / denom2;
+        }
+
+        zr = temp_r;
+        zi = temp_i;
+
+        // if new_zr * new_zr + new_zi * new_zi > 4.0 {
+        //     break;
+        // }
+
+        if zr * zr + zi * zi > 4.0 {
             break;
         }
     }
@@ -126,16 +145,30 @@ fn fractal(params: FractalParams) -> FractalResult {
 fn fractal_res_to_color(res: FractalResult) -> vec3f {
     const escape_radius = 2.0;
     const curve_exp = 1.0;
+    const brightness_max_iter = 200.0;
 
+    let x = res.final_z.x;
+    let y = res.final_z.y;
+    let dist = sqrt(x * x + y * y) - escape_radius;
+    let value = f32(res.exit_iteration) + 1.0 - saturate(dist);
+    let t = value / brightness_max_iter;
+
+    var brightness = 0.0;
     if res.exit_iteration == material.iteration_count {
-        return vec3(0.0, 0.0, 0.0);
+        brightness = 0.0;
     } else {
-        let x = res.final_z.x;
-        let y = res.final_z.y;
-        let dist = sqrt(x * x + y * y) - escape_radius;
-        let value = f32(res.exit_iteration) + 1.0 - saturate(dist);
-        let t = value / f32(material.iteration_count);
-        let curved_t = pow(t, curve_exp);
-        return mix(vec3(0.001), vec3(1.0), curved_t);
+        // let curved_t = pow(t, curve_exp);
+        let curved_t = t;
+        brightness = mix(0.001, 1.0, curved_t);
     }
+
+    var color = hsv2rgb(vec3(value * 0.01 + 0.6, 1.0, 1.0));
+
+    return color * brightness;
+}
+
+fn hsv2rgb(hsv: vec3f) -> vec3f {
+    let k = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    let p = abs(fract(hsv.rrr + k.rgb) * 6.0 - k.www);
+    return hsv.b * mix(k.rrr, saturate(p - k.rrr), hsv.g);
 }
