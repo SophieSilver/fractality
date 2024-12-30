@@ -126,16 +126,30 @@ fn fractal(params: FractalParams) -> FractalResult {
 fn fractal_res_to_color(res: FractalResult) -> vec3f {
     const escape_radius = 2.0;
     const curve_exp = 1.0;
+    const brightness_max_iter = 200.0;
 
+    let x = res.final_z.x;
+    let y = res.final_z.y;
+    let dist = sqrt(x * x + y * y) - escape_radius;
+    let value = f32(res.exit_iteration) + 1.0 - saturate(dist);
+    let t = value / brightness_max_iter;
+
+    var brightness = 0.0;
     if res.exit_iteration == material.iteration_count {
-        return vec3(0.0, 0.0, 0.0);
+        brightness = 0.0;
     } else {
-        let x = res.final_z.x;
-        let y = res.final_z.y;
-        let dist = sqrt(x * x + y * y) - escape_radius;
-        let value = f32(res.exit_iteration) + 1.0 - saturate(dist);
-        let t = value / f32(material.iteration_count);
-        let curved_t = pow(t, curve_exp);
-        return mix(vec3(0.001), vec3(1.0), curved_t);
+        // let curved_t = pow(t, curve_exp);
+        let curved_t = t;
+        brightness = mix(0.001, 1.0, curved_t);
     }
+
+    var color = hsv2rgb(vec3(value * 0.01 + 0.6, 1.0, 1.0));
+
+    return color * brightness;
+}
+
+fn hsv2rgb(hsv: vec3f) -> vec3f {
+    let k = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    let p = abs(fract(hsv.rrr + k.rgb) * 6.0 - k.www);
+    return hsv.b * mix(k.rrr, saturate(p - k.rrr), hsv.g);
 }
