@@ -91,6 +91,11 @@ pub fn ui_system(
                 ui.label("C:");
                 ui.indent(ui.next_auto_id(), |ui| ui.add(ComplexParameterInput(c)));
                 ui.add_space(5.0);
+
+                let p = fractal.reborrow().map_unchanged(|f| &mut f.p);
+                ui.label("Exponent:");
+                ui.indent(ui.next_auto_id(), |ui| ui.add(ComplexParameterInput(p)));
+                ui.add_space(5.0);
             });
         });
 

@@ -28,6 +28,7 @@ pub struct Fractal {
     pub offset: Vec2,
     pub initial_z: ComplexParameter,
     pub c: ComplexParameter,
+    pub p: ComplexParameter,
 }
 
 impl Default for Fractal {
@@ -40,6 +41,10 @@ impl Default for Fractal {
             c: ComplexParameter {
                 real: Parameter::PixelX,
                 imaginary: Parameter::PixelY,
+            },
+            p: ComplexParameter {
+                real: Parameter::Value(2.0),
+                imaginary: Parameter::Value(0.0),
             },
         }
     }

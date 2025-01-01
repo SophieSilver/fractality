@@ -27,8 +27,10 @@ const Z_R_VALUE_INDEX: u32 = 0;
 const Z_I_VALUE_INDEX: u32 = 1;
 const C_R_VALUE_INDEX: u32 = 2;
 const C_I_VALUE_INDEX: u32 = 3;
-const PIXEL_X_INDEX: u32 = 4;
-const PIXEL_Y_INDEX: u32 = 5;
+const P_R_VALUE_INDEX: u32 = 4;
+const P_I_VALUE_INDEX: u32 = 5;
+const PIXEL_X_INDEX: u32 = 6;
+const PIXEL_Y_INDEX: u32 = 7;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct FractalMaterialPlugin;
@@ -69,6 +71,7 @@ pub struct FractalMaterial {
     offset: Vec2,
     initial_z: EncodedComplexParameter,
     c: EncodedComplexParameter,
+    p: EncodedComplexParameter,
 }
 
 impl Default for FractalMaterial {
@@ -142,6 +145,7 @@ impl From<Fractal> for FractalMaterial {
                 Z_I_VALUE_INDEX,
             ),
             c: encode_complex_parameter(fractal.c, C_R_VALUE_INDEX, C_I_VALUE_INDEX),
+            p: encode_complex_parameter(fractal.p, P_R_VALUE_INDEX, P_I_VALUE_INDEX),
         }
     }
 }
