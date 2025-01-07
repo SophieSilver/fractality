@@ -6,7 +6,7 @@ use bevy::{
 };
 use bevy_egui::{
     egui::{self, DragValue, Frame, Grid, Margin, RichText, ScrollArea},
-    EguiContext, EguiContexts, EguiPlugin, EguiSettings,
+    EguiContext, EguiContexts, EguiPlugin, EguiContextSettings,
 };
 use num_input::show_num_input;
 use parameter::ComplexParameterInput;
@@ -43,7 +43,7 @@ impl Plugin for UiPlugin {
 pub struct NonUiArea(pub URect);
 
 pub fn setup_ui(
-    mut windows: Query<(&mut EguiContext, &mut EguiSettings, &Window), With<PrimaryWindow>>,
+    mut windows: Query<(&mut EguiContext, &mut EguiContextSettings, &Window), With<PrimaryWindow>>,
 ) {
     for (mut context, mut settings, window) in windows.iter_mut() {
         settings.scale_factor = UI_SCALE / window.scale_factor();
