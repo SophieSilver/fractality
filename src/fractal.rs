@@ -25,6 +25,7 @@ impl Plugin for FractalPlugin {
 pub struct Fractal {
     pub iteration_count: u32,
     pub scale: f32,
+    pub escape_radius: f32,
     pub offset: Vec2,
     pub initial_z: ComplexParameter,
     pub c: ComplexParameter,
@@ -36,6 +37,7 @@ impl Default for Fractal {
         Self {
             iteration_count: 100,
             scale: 2.0,
+            escape_radius: 2.0,
             offset: Vec2::ZERO,
             initial_z: default(),
             c: ComplexParameter {

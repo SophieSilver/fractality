@@ -32,6 +32,7 @@ struct FractalMaterial {
     initial_z: ComplexParameter,
     c: ComplexParameter,
     p: ComplexParameter,
+    escape_radius: f32,
 }
 
 struct FractalVertexInput {
@@ -102,15 +103,13 @@ fn get_fractal_params(x: f32, y: f32) -> FractalParams {
     return out;
 }
 
-const escape_radius = 2.0;
-
 fn fractal(params: FractalParams) -> FractalResult {
     var z = params.z;
     let c = params.c;
     let p = params.p;
     var out: FractalResult;
 
-    let r_squared = escape_radius * escape_radius;
+    let r_squared = material.escape_radius * material.escape_radius;
 
     var i: u32;
     for (i = 0u; i < material.iteration_count; i += 1u) {
@@ -133,7 +132,7 @@ fn fractal_res_to_color(res: FractalResult) -> vec3f {
 
     let x = res.final_z.x;
     let y = res.final_z.y;
-    let dist = (sqrt(x * x + y * y) - escape_radius) / (escape_radius * escape_radius / 4.0);
+    let dist = (sqrt(x * x + y * y) - material.escape_radius) / (material.escape_radius * material.escape_radius / 4.0);
     let value = f32(res.exit_iteration) + 1.0 - saturate(dist);
     let t = value / brightness_max_iter;
 

@@ -72,6 +72,7 @@ pub struct FractalMaterial {
     initial_z: EncodedComplexParameter,
     c: EncodedComplexParameter,
     p: EncodedComplexParameter,
+    escape_radius: f32,
 }
 
 impl Default for FractalMaterial {
@@ -138,6 +139,7 @@ impl From<Fractal> for FractalMaterial {
         Self {
             iteration_count: fractal.iteration_count,
             scale: fractal.scale,
+            escape_radius: fractal.escape_radius,
             offset: fractal.offset,
             initial_z: encode_complex_parameter(
                 fractal.initial_z,

@@ -8,12 +8,12 @@ use bevy_egui::{
     egui::{self, DragValue, Frame, Grid, Margin, RichText, ScrollArea},
     EguiContext, EguiContexts, EguiPlugin, EguiSettings,
 };
-use parameter::ComplexParameterInput;
 use num_input::show_num_input;
+use parameter::ComplexParameterInput;
 
 use crate::fractal::Fractal;
-pub mod parameter;
 pub mod num_input;
+pub mod parameter;
 
 const UI_SCALE: f32 = 1.25;
 const DRAG_SENSITIVITY: f32 = 0.0025;
@@ -69,14 +69,25 @@ pub fn ui_system(
                 ui.label(RichText::new("Parameters").strong().size(18.0));
                 ui.separator();
 
-                ui.horizontal(|ui| {
+                Grid::new(ui.next_auto_id()).show(ui, |ui| {
                     let current_iter_count = fractal.iteration_count;
+                    // make iteration count more sensitive the larger it is
+                    let iter_count_sensitivity =
+                        (current_iter_count + 1) as f32 * ITER_COUNT_SENSITIVITY_COEF;
+
                     ui.label("Iteration Count:");
                     show_num_input(
                         ui,
                         fractal.reborrow().map_unchanged(|f| &mut f.iteration_count),
-                        (current_iter_count + 1) as f32 * ITER_COUNT_SENSITIVITY_COEF,
+                        iter_count_sensitivity,
                     );
+                    ui.end_row();
+
+                    let r = fractal.reborrow().map_unchanged(|f| &mut f.escape_radius);
+                    let r_sensitivity = (r.abs() + 1.0) * DRAG_SENSITIVITY;
+                    ui.label("Escape Radius:");
+                    show_num_input(ui, r, r_sensitivity);
+                    ui.end_row();
                 });
                 ui.add_space(5.0);
 
