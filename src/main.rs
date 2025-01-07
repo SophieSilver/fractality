@@ -15,13 +15,19 @@ fn main() {
         CompositingPlugin,
         UiPlugin,
     ))
-    .add_systems(Startup, initialize);
+    .add_systems(Startup, on_start);
     app.run();
 }
 
-fn initialize(mut msaa: Query<&mut Msaa>, mut _window: Query<&mut Window>) {
+fn on_start(
+    mut msaa: Query<&mut Msaa>,
+    // mut _window: Query<&mut Window>,
+    device: Res<RenderDevice>,
+) {
     for mut msaa in msaa.iter_mut() {
         *msaa = Msaa::Off;
     }
+
+    info!(device_features=?device.features(), "");
     // window.get_single_mut().unwrap().present_mode = PresentMode::AutoNoVsync;
 }
