@@ -1,5 +1,11 @@
 #![allow(dead_code, unused_imports)]
-use bevy::{prelude::*, render::prelude::*};
+use bevy::{
+    prelude::*,
+    render::{
+        prelude::*,
+        renderer::RenderDevice,
+    },
+};
 use fractality::{
     compositing::CompositingPlugin, fps_title::FpsTitlePlugin, fractal::FractalPlugin,
     input::FractalInputPlugin, ui::UiPlugin,

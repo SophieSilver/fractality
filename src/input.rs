@@ -8,7 +8,7 @@ use bevy::{
     },
     log::{error, info},
     math::{ops::exp2, vec2, UVec2, Vec2},
-    prelude::{Camera, IntoSystemConfigs, MouseButton, Query, Res, ResMut, Resource, With},
+    prelude::*,
     window::{PrimaryWindow, Window},
 };
 
