@@ -50,10 +50,12 @@ pub fn fractal_input_system(
     mouse_wheel: Res<AccumulatedMouseScroll>,
     mut state: ResMut<FractalInputState>,
 ) {
+    let Ok(window) = window.get_single() else {
+        return;
+    };
     // we are assuming only one fractal and one fractal camera ever exists in the scene
     let camera = camera.single_mut();
     let mut fractal = fractal.single_mut();
-    let window = window.single();
     let Some(camera_rect) = camera.logical_viewport_rect() else {
         error!("Failed to get the camera rect");
         return;

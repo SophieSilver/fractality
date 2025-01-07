@@ -58,7 +58,9 @@ pub fn ui_system(
     mut fractal: Query<&mut Fractal>,
     mut non_ui_area: ResMut<NonUiArea>,
 ) {
-    let ctx = contexts.ctx_mut();
+    let Some(ctx) = contexts.try_ctx_mut() else {
+        return;
+    };
     let mut fractal = fractal.single_mut();
 
     egui::SidePanel::right("UiPanel")
@@ -123,7 +125,9 @@ pub fn consume_inputs_over_ui(
     mut buttons: ResMut<ButtonInput<MouseButton>>,
     mut wheel: ResMut<AccumulatedMouseScroll>,
 ) {
-    let ctx = contexts.ctx_mut();
+    let Some(ctx) = contexts.try_ctx_mut() else {
+        return;
+    };
 
     if ctx.is_using_pointer() || ctx.is_pointer_over_area() {
         buttons.clear();
