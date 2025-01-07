@@ -1,20 +1,17 @@
 #![allow(dead_code, unused_imports)]
 use bevy::{
     prelude::*,
-    render::{
-        prelude::*,
-        renderer::RenderDevice,
-    },
+    render::{prelude::*, renderer::RenderDevice},
 };
 use fractality::{
     compositing::CompositingPlugin, fps_title::FpsTitlePlugin, fractal::FractalPlugin,
-    input::FractalInputPlugin, ui::UiPlugin,
+    input::FractalInputPlugin, ui::UiPlugin, utils::get_default_render_plugin,
 };
 
-fn main() {
+fn main() -> AppExit {
     let mut app = App::new();
     app.add_plugins((
-        DefaultPlugins,
+        DefaultPlugins.build().set(get_default_render_plugin()),
         FpsTitlePlugin,
         FractalPlugin,
         FractalInputPlugin,
@@ -22,7 +19,8 @@ fn main() {
         UiPlugin,
     ))
     .add_systems(Startup, on_start);
-    app.run();
+
+    app.run()
 }
 
 fn on_start(

@@ -19,6 +19,7 @@ bevy = { version = "0.15.1", default-features = false, features = [
     "wayland",
 ] }
 bevy_egui = "0.32.0"
+wgpu = { version = "23.0.1", default-features = false, features = ["vulkan-portability"] }
 
 
 [profile.dev]
