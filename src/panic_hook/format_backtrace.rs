@@ -16,7 +16,7 @@ impl Display for BacktraceFormatter {
             if first {
                 first = false;
             } else {
-                write!(f, "\n")?;
+                writeln!(f)?;
             }
 
             write!(f, "{i:>4} {item}")?;
@@ -41,7 +41,7 @@ impl Display for BacktraceItem<'_> {
 }
 
 pub(crate) fn short_backtrace_iterator(bt: &Backtrace) -> impl Iterator<Item = BacktraceItem> {
-    let mut items = bt.frames().into_iter().flat_map(frame_item_iterator);
+    let mut items = bt.frames().iter().flat_map(frame_item_iterator);
     // backup in case we can't find the end
     let initial_items = items.clone();
     // skip all elements before a trace end
@@ -74,7 +74,7 @@ pub(crate) fn frame_item_iterator(
     let symbols = frame.symbols();
 
     let items = symbols
-        .into_iter()
+        .iter()
         .flat_map(|sym| sym.name().map(|name| name.as_bytes()))
         .map(BacktraceItem::Name);
 
@@ -103,9 +103,9 @@ pub(crate) fn item_name_contains(item: BacktraceItem, s: &str) -> bool {
     let name = SymbolName::new(name);
     let mut demangled = SmallString::<[_; 1024]>::new();
     let demangle_result = write!(&mut demangled, "{:#}", name);
-    if let Err(_) = demangle_result {
-        false;
+    if demangle_result.is_err() {
+        return false;
     };
 
-    demangled.contains(&s)
+    demangled.contains(s)
 }

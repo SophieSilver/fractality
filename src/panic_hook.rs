@@ -54,8 +54,7 @@ fn panic_hook(info: &PanicHookInfo<'_>) {
 
 fn payload_as_str(payload: &dyn Any) -> &str {
     payload
-        .downcast_ref::<&str>()
-        .map(|&s| s)
+        .downcast_ref::<&str>().copied()
         .or_else(|| payload.downcast_ref::<String>().map(String::as_str))
-        .unwrap_or_else(|| "<NO PAYLOAD>")
+        .unwrap_or("<NO PAYLOAD>")
 }
