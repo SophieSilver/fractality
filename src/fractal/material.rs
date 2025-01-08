@@ -1,7 +1,6 @@
 use bevy::{
     asset::RenderAssetUsages,
     ecs::query::QuerySingleError,
-    math::{ivec2, uvec2},
     prelude::*,
     render::{
         mesh::{

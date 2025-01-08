@@ -1,5 +1,5 @@
 use bevy::prelude::Mut;
-use bevy_egui::egui::{self, emath::Numeric, DragValue, Ui};
+use bevy_egui::egui::{emath::Numeric, DragValue, Ui};
 
 pub fn show_num_input<Num: Numeric>(ui: &mut Ui, mut value: Mut<Num>, sensitivity: impl Into<f64>) {
     let mut modifiable_value = *value;

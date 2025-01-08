@@ -1,10 +1,11 @@
-#![allow(dead_code, unused_imports)]
-use bevy::{
-    prelude::*,
-    render::{prelude::*, renderer::RenderDevice},
-};
+#![windows_subsystem = "windows"]
+
+// #![allow(dead_code, unused_imports)]
+use bevy::{prelude::*, render::renderer::RenderDevice};
 use fractality::{
-    compositing::CompositingPlugin, fps_title::FpsTitlePlugin, fractal::FractalPlugin, input::FractalInputPlugin, panic_hook::PanicHookPlugin, ui::UiPlugin, utils::get_default_render_plugin
+    compositing::CompositingPlugin, fps_title::FpsTitlePlugin, fractal::FractalPlugin,
+    input::FractalInputPlugin, panic_hook::PanicHookPlugin, ui::UiPlugin,
+    utils::get_default_render_plugin,
 };
 
 fn main() -> AppExit {

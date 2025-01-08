@@ -1,5 +1,3 @@
-use std::default;
-
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Parameter {
     Value(f32),

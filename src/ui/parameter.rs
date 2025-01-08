@@ -1,11 +1,5 @@
-use std::hash::Hash;
-
-use bevy::{
-    log::{debug, info},
-    math::vec2,
-    prelude::Mut,
-};
-use bevy_egui::egui::{self, ComboBox, DragValue, Grid, Ui, Widget, WidgetText};
+use bevy::{log::debug, prelude::Mut};
+use bevy_egui::egui::{self, ComboBox, DragValue, Grid, Ui, Widget};
 
 use crate::fractal::parameters::{ComplexParameter, Parameter};
 

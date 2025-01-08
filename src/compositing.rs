@@ -1,10 +1,9 @@
 use bevy::{
-    math::uvec2,
     prelude::*,
-    render::camera::{camera_system, ScalingMode, SubCameraView, Viewport},
+    render::camera::{camera_system, ScalingMode, Viewport},
 };
 
-use crate::ui::{NonUiArea, UiSystemSet};
+use crate::ui::NonUiArea;
 
 /// Plugin responsible for managing different viewports of the app
 pub struct CompositingPlugin;

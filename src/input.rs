@@ -3,11 +3,11 @@
 use bevy::{
     app::{Plugin, Update},
     input::{
-        mouse::{AccumulatedMouseScroll, MouseScrollUnit, MouseWheel},
+        mouse::{AccumulatedMouseScroll, MouseScrollUnit},
         ButtonInput,
     },
-    log::{error, info},
-    math::{ops::exp2, vec2, UVec2, Vec2},
+    log::error,
+    math::{ops::exp2, vec2, Vec2},
     prelude::*,
     window::{PrimaryWindow, Window},
 };
@@ -121,5 +121,5 @@ pub fn fractal_input_system(
 }
 
 fn lines_to_pixels(lines: f32) -> f32 {
-    lines * 12.0
+    lines * PIXELS_PER_LINE
 }

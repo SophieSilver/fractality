@@ -5,7 +5,7 @@ use bevy::{
     },
     utils::default,
 };
-use wgpu::{Backends, Features};
+use wgpu::Backends;
 
 pub fn get_default_render_plugin() -> RenderPlugin {
     let vulkan_supported = wgpu::Instance::enabled_backend_features().contains(Backends::VULKAN);

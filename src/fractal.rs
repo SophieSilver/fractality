@@ -1,10 +1,4 @@
-use std::time::Duration;
-
-use crate::{compositing::ViewportCamera, input::FractalInputPlugin};
-use bevy::{
-    ecs::query::QuerySingleError, prelude::*, render::view::RenderLayers, sprite::Material2dPlugin,
-    time::common_conditions,
-};
+use bevy::prelude::*;
 use material::{create_fractal_mesh, FractalMaterial, FractalMaterialPlugin};
 use parameters::{ComplexParameter, Parameter};
 

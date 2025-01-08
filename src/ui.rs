@@ -1,12 +1,6 @@
-use bevy::{
-    ecs::schedule::common_conditions,
-    input::mouse::AccumulatedMouseScroll,
-    math::{dvec2, uvec2, vec2},
-    prelude::*,
-    window::{CursorGrabMode, PrimaryWindow},
-};
+use bevy::{input::mouse::AccumulatedMouseScroll, math::uvec2, prelude::*, window::PrimaryWindow};
 use bevy_egui::{
-    egui::{self, DragValue, Frame, Grid, Margin, RichText, ScrollArea},
+    egui::{self, Frame, Grid, Margin, RichText, ScrollArea},
     EguiContext, EguiContextSettings, EguiContexts, EguiPlugin,
 };
 use num_input::show_num_input;
