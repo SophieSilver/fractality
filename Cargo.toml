@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+backtrace = "0.3.74"
 bevy = { version = "0.15.1", default-features = false, features = [
     "bevy_asset",
     "bevy_color",
@@ -19,7 +20,12 @@ bevy = { version = "0.15.1", default-features = false, features = [
     "wayland",
 ] }
 bevy_egui = "0.32.0"
-wgpu = { version = "23.0.1", default-features = false, features = ["vulkan-portability"] }
+rfd = { version = "0.15.2", default-features = false, features = ["gtk3"] }
+smallstr = { version = "0.3.0", features = ["std"] }
+smallvec = { version = "1.13.2", features = ["const_generics"] }
+wgpu = { version = "23.0.1", default-features = false, features = [
+    "vulkan-portability",
+] }
 
 
 [profile.dev]
@@ -30,9 +36,6 @@ inherits = "release"
 debug-assertions = true
 overflow-checks = true
 incremental = false
-
-[profile.release]
-
 
 [profile.hyperoptimize]
 inherits = "release"
