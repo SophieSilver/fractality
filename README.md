@@ -6,11 +6,11 @@ Simple and fast fractal visualizer.
 
 The fractal is calculated by iterating the equation
 
-$z_n = z_{n-1}^p + c$
+$z_{n} = z_{n-1}^p + c$
 
-where $z_n$, $c$, and $cp$ are complex number paramters.
+where $z_{n}$, $c$, and $c_{p}$ are complex number paramters.
 
-If $z_n$ stays bounded, the point is contained in the fractal,
+If $z_{n}$ stays bounded, the point is contained in the fractal,
 otherwise, if it blows up to infinity,
 it is colored based on how many iterations it took it to escape.
 
