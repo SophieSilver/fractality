@@ -1,7 +1,7 @@
 name: "Compile release binaries"
 on:
   release:
-    types: [created]
+    types: [published, edited]
 
 jobs:
   check:
