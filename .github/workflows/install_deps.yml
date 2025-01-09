@@ -6,6 +6,6 @@ jobs:
   install-deps:
     runs-on: ubuntu-latest
     steps:
-      - uses: tecolicon/actions-use-apt-tools@v1
+      - uses: tecolicom/actions-use-apt-tools@v1
         with:
           tools: libgtk-3-dev g++ pkg-config libx11-dev libasound2-dev libudev-dev libxkbcommon-x11-0
