@@ -14,7 +14,7 @@ If $z_n$ stays bounded, the point is contained in the fractal,
 otherwise, if it blows up to infinity,
 it is colored based on how many iterations it took it to escape.
 
-The real and imaginary components of $z_0$, $c$, and $p$ can be set to
+The real and imaginary components of $z_{0}$, $c$, and $p$ can be set to
 constant values or parametrized over the $X$ or $Y$ coordinates.
 
 ### Parameters
@@ -51,10 +51,10 @@ constant values or parametrized over the $X$ or $Y$ coordinates.
 
 ## Planned future features
 
-- [] Double precision
-- [] Coloring options
-- [] More equations
-- [] Display the path of a single point
-- [] Using cursor position as a parameter
-- [] Rendering and performance improvements
-- [] Displaying multiple fractals at the same time
+- [ ] Double precision
+- [ ] Coloring options
+- [ ] More equations
+- [ ] Display the path of a single point
+- [ ] Using cursor position as a parameter
+- [ ] Rendering and performance improvements
+- [ ] Displaying multiple fractals at the same time
