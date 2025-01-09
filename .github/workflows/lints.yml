@@ -4,10 +4,7 @@ on:
   pull_request:
 
 jobs:
-  deps:
-    uses: ./.github/workflows/install_deps.yml
   check:
-    needs: deps
     name: cargo check
     runs-on: ubuntu-latest
     env:
@@ -15,4 +12,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: ./.github/workflows/install_deps.yml
       - run: cargo check

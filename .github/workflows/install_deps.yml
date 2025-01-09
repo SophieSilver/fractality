@@ -9,3 +9,4 @@ jobs:
       - uses: tecolicom/actions-use-apt-tools@v1
         with:
           tools: libgtk-3-dev g++ pkg-config libx11-dev libasound2-dev libudev-dev libxkbcommon-x11-0 libwayland-dev libxkbcommon-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev
+          cache: yes
