@@ -17,3 +17,17 @@ jobs:
           packages: libgtk-3-dev g++ pkg-config libx11-dev libasound2-dev libudev-dev libxkbcommon-x11-0 libwayland-dev libxkbcommon-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libatk1.0-dev
           version: 1.0
       - run: cargo check
+
+  clippy:
+    name: cargo clippy
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libgtk-3-dev g++ pkg-config libx11-dev libasound2-dev libudev-dev libxkbcommon-x11-0 libwayland-dev libxkbcommon-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libatk1.0-dev
+          version: 1.0
+      - run: cargo clippy
