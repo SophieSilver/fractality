@@ -8,7 +8,7 @@ The fractal is calculated by iterating the equation
 
 $z_{n} = z_{n-1}^p + c$
 
-where $z_{n}$, $c$, and $c_{p}$ are complex number paramters.
+where $z_{n}$, $c$, and $c_{p}$ are complex number parameters.
 
 If $z_{n}$ stays bounded, the point is contained in the fractal,
 otherwise, if it blows up to infinity,
