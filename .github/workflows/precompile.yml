@@ -44,6 +44,22 @@ jobs:
           files: "./fractality-windows-x86_64.exe"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
+  build_arm64_macos:
+    name: Build ARM64 MacOS
+    runs-on: macos-14-arm64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: "Build and rename the executable"
+        run: |
+          cargo build --profile=hyperoptimize
+          mv target/hyperoptimize/fractality ./fractality-macos-arm64.exe
+
+      - uses: AButler/upload-release-assets@v3.0
+        with:
+          files: "./fractality-macos-arm64.exe"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
   ## FIXME: figure out how  to install shit to a different SYSROOT (will probably need a docker container for that)
   # build_i686_linux:
   #   name: Build i686 Linux
