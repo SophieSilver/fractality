@@ -88,7 +88,7 @@ Follow these instructions if you want to compile the project yourself.
   ```
 - Install [OS dependencies for Bevy](https://bevyengine.org/learn/quick-start/getting-started/setup/#installing-os-dependencies)
 
-  On Linux you must also install `libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libgtk-3-dev`
+  On Linux you must also install `libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libgtk-3-dev libatk1.0-dev`
 
 - Clone the repository and run:
   ```sh
