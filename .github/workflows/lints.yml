@@ -10,8 +10,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: 'stable, 1.84.0'
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: >
@@ -27,8 +25,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: 'stable, 1.84.0'
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: >
