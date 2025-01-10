@@ -19,13 +19,12 @@ jobs:
             libxkbcommon-x11-0 libwayland-dev libxkbcommon-dev libxcb-render0-dev 
             libxcb-shape0-dev libxcb-xfixes0-dev libatk1.0-dev
           version: 1.0
-      - uses: AButler/upload-release-assets@v3.0
-        with:
-          files: "./fractality-linux-x86_64"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - run: |
           cargo build --profile=hyperoptimize
           mv target/hyperoptimize/fractality ./fractality-linux-x86_64
 
-
+      - uses: AButler/upload-release-assets@v3.0
+        with:
+          files: "./fractality-linux-x86_64"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
