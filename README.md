@@ -29,7 +29,7 @@ constant values or parametrized over the $X$ or $Y$ coordinates.
 
 ## Interesting fractals
 
-#### Mandelbrot set
+### Mandelbrot set
 
 | Parameter | real         | imaginary    |
 | --------- | ------------ | ------------ |
@@ -39,7 +39,7 @@ constant values or parametrized over the $X$ or $Y$ coordinates.
 
 ![Mandlebrot set image](materials/mandelbrot_set.png)
 
-#### Julia set
+### Julia set
 
 | Parameter | real            | imaginary       |
 | --------- | --------------- | --------------- |
