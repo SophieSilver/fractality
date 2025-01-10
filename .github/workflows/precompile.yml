@@ -1,7 +1,7 @@
 name: "Compile release binaries"
 on:
   release:
-    types: [published, edited]
+    types: [published]
 
 jobs:
   build_x64_linux:
@@ -44,39 +44,43 @@ jobs:
           files: "./fractality-windows-x86_64.exe"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-  build_arm64_macos:
-    name: Build ARM64 MacOS
-    runs-on: macos-14
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - name: "Build and rename the executable"
-        run: |
-          cargo build --profile=hyperoptimize
-          mv target/hyperoptimize/fractality ./fractality-macos-arm64
+  ## FIXME:
+  ## MacOS requires us to bundle our application into an .app,
+  ## Running a bare executable is not how they do things there
+  # build_arm64_macos:
+  #   name: Build ARM64 MacOS
+  #   runs-on: macos-14
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions-rust-lang/setup-rust-toolchain@v1
+  #     - name: "Build and rename the executable"
+  #       run: |
+  #         cargo build --profile=hyperoptimize
+  #         mv target/hyperoptimize/fractality ./fractality-macos-arm64
 
-      - uses: AButler/upload-release-assets@v3.0
-        with:
-          files: "./fractality-macos-arm64"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+  #     - uses: AButler/upload-release-assets@v3.0
+  #       with:
+  #         files: "./fractality-macos-arm64"
+  #         repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-  build_z64_macos:
-    name: Build x86_64 MacOS
-    runs-on: macos-13
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - name: "Build and rename the executable"
-        run: |
-          cargo build --profile=hyperoptimize
-          mv target/hyperoptimize/fractality ./fractality-macos-x86_64
+  # build_z64_macos:
+  #   name: Build x86_64 MacOS
+  #   runs-on: macos-13
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions-rust-lang/setup-rust-toolchain@v1
+  #     - name: "Build and rename the executable"
+  #       run: |
+  #         cargo build --profile=hyperoptimize
+  #         mv target/hyperoptimize/fractality ./fractality-macos-x86_64
 
-      - uses: AButler/upload-release-assets@v3.0
-        with:
-          files: "./fractality-macos-x86_64"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+  #     - uses: AButler/upload-release-assets@v3.0
+  #       with:
+  #         files: "./fractality-macos-x86_64"
+  #         repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-  ## FIXME: figure out how  to install shit to a different SYSROOT (will probably need a docker container for that)
+  ## FIXME:
+  ## figure out how  to install shit to a different SYSROOT (will probably need a docker container for that)
   # build_i686_linux:
   #   name: Build i686 Linux
   #   runs-on: ubuntu-24.04
