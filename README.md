@@ -62,7 +62,7 @@ constant values or parametrized over the $X$ or $Y$ coordinates.
 
 ## Installation
 
-Comiled binaries will be available in the
+Compiled executables will be available in the
 [Releases](https://github.com/SophieSilver/fractality/releases/) section on GitHub.
 
 Just download the one for your platform and run it.
@@ -71,9 +71,7 @@ Just download the one for your platform and run it.
 
 Fractality aims to fully support x86_64 Windows and Linux.
 
-Other Platforms (e.g. Mac OS) are still going to get compiled binaries,
-however, I don't have the means to reasonably test and debug them. Feel free to open an issue if
-you experience any problems.
+Other platforms like Mac OS, ARM Windows and Linux might receive experimental support in the future.
 
 ## Build Instructions
 
