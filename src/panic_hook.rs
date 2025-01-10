@@ -44,6 +44,8 @@ fn panic_hook(info: &PanicHookInfo<'_>) {
         "thread {thread_name} panicked{location_str}\n{payload}\nstack backtrace:\n{backtrace}",
     );
 
+    error!("{description}");
+
     rfd::MessageDialog::new()
         .set_level(MessageLevel::Error)
         .set_title("Critical Error")
