@@ -20,9 +20,11 @@ bevy = { version = "0.15.1", default-features = false, features = [
     "wayland",
 ] }
 bevy_egui = "0.32.0"
+log = { version = "0.4.24", features = ["release_max_level_debug"] }
 rfd = { version = "0.15.2", default-features = false, features = ["gtk3"] }
 smallstr = { version = "0.3.0", features = ["std"] }
 smallvec = { version = "1.13.2", features = ["const_generics"] }
+tracing = { version = "0.1.41", features = ["release_max_level_debug"] }
 wgpu = { version = "23.0.1", default-features = false, features = [
     "vulkan-portability",
 ] }
