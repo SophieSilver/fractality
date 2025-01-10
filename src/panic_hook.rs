@@ -50,11 +50,15 @@ fn panic_hook(info: &PanicHookInfo<'_>) {
         .set_buttons(MessageButtons::Ok)
         .set_description(description)
         .show();
+
+    // don't hang around after a crash
+    std::process::abort();
 }
 
 fn payload_as_str(payload: &dyn Any) -> &str {
     payload
-        .downcast_ref::<&str>().copied()
+        .downcast_ref::<&str>()
+        .copied()
         .or_else(|| payload.downcast_ref::<String>().map(String::as_str))
         .unwrap_or("<NO PAYLOAD>")
 }
