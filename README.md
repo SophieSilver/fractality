@@ -78,11 +78,11 @@ Other platforms like Mac OS, ARM Windows and Linux might receive experimental su
 Follow these instructions if you want to compile the project yourself.
 
 - Install the Rust toolchain if you haven't already. Instructions on how to do that are available
-  [in the Rust bool](https://doc.rust-lang.org/book/ch01-01-installation.html).
-- Make sure your `rustc` version is `1.83.0` or greater:
+  [in the Rust book](https://doc.rust-lang.org/book/ch01-01-installation.html).
+- Make sure your `rustc` version is `1.84.0` or greater:
   ```sh
   $ rustc --version
-  rustc 1.83.0 (90b35a623 2024-11-26)
+  rustc 1.84.0 (9fc6b4312 2025-01-07)
   ```
 - Install [OS dependencies for Bevy](https://bevyengine.org/learn/quick-start/getting-started/setup/#installing-os-dependencies)
 
