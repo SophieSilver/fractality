@@ -1,4 +1,5 @@
 use bevy::{
+    math::uvec2,
     prelude::*,
     render::camera::{camera_system, ScalingMode, Viewport},
 };
@@ -45,7 +46,8 @@ pub fn resize_viewport(mut camera: Query<&mut Camera, With<ViewportCamera>>, are
 
     camera.viewport = Some(Viewport {
         physical_position: area.min,
-        physical_size: area.size(),
+        // should be at least (1, 1)
+        physical_size: area.size().max(uvec2(1, 1)),
         depth: 0.0..1.0,
     })
 }
