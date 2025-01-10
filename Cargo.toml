@@ -42,5 +42,4 @@ inherits = "release"
 opt-level = 3
 lto = "fat"
 codegen-units = 1
-strip = "debuginfo"
 incremental = false
