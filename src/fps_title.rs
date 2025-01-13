@@ -30,12 +30,13 @@ pub fn fps_title_system(
         return;
     };
 
-    let Some(fps) = diagnostics
-        .get(&FrameTimeDiagnosticsPlugin::FPS)
-        .and_then(|d| d.average())
-    else {
+    let d = diagnostics
+        .get(&FrameTimeDiagnosticsPlugin::FRAME_TIME)
+        .unwrap();
+    let Some(avg_time) = d.average() else {
         return;
     };
+    let fps = 1.0 / (avg_time / 1000.0);
 
     window.title = format!("Fractality ({fps:.2} FPS)");
 }
