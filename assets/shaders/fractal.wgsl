@@ -12,6 +12,15 @@ const PIXEL_Y_INDEX: u32 = 7;
 const PARAM_ARRAY_SIZE: u32 = 16;
 
 const LARGE_FLOAT: f32 = 1e38;
+const MAX_INT_POW: u32 = 15;
+
+// Exponent modes
+const EXP_2: u32 = 0;
+const EXP_0: u32 = 1;
+const EXP_POS_INT: u32 = 2;
+const EXP_NEG_INT: u32 = 3;
+const EXP_REAL: u32 = 4;
+const EXP_COMPLEX: u32 = 5;
 
 struct ComplexParameter {
     real_value: f32,
@@ -54,6 +63,7 @@ struct FractalParams {
     z: vec2f,
     c: vec2f,
     p: vec2f,
+    exp_mode: u32,
 }
 
 @group(2) @binding(0) var<uniform> material: FractalMaterial;
@@ -69,14 +79,10 @@ fn vertex(in: FractalVertexInput) -> FragmentInput {
 
 @fragment
 fn fragment(in: FragmentInput) -> @location(0) vec4f {
-    // let x = f64(in.world_pos.x) * 0.000002 - 1.0;
-    // let y = f64(in.world_pos.y) * 0.000002 + 0.3033229;
     let x = in.world_pos.x * material.scale + material.offset.x;
     let y = in.world_pos.y * material.scale + material.offset.y;
-    const iters = 250u;
     let params = get_fractal_params(x, y);
     let res = fractal(params);
-
 
     return vec4(fractal_res_to_color(res), 1.0);
 }
@@ -100,7 +106,35 @@ fn get_fractal_params(x: f32, y: f32) -> FractalParams {
     out.p.x = param_array[material.p.real_index];
     out.p.y = param_array[material.p.imag_index];
 
+    out.exp_mode = get_exp_mode(material);
+
     return out;
+}
+
+fn get_exp_mode(m: FractalMaterial) -> u32 {
+    // if the exponent is constant
+    if m.p.real_index == P_R_VALUE_INDEX && m.p.imag_index == P_I_VALUE_INDEX {
+        if m.p.imag_value != 0 {
+            // TODO: maybe if it's only imaginary we could do some smart thing as well
+            return EXP_COMPLEX;
+        }
+        if m.p.real_value == 0.0 {
+            return EXP_0;
+        }
+        if m.p.real_value == 2.0 {
+            return EXP_2;
+        }
+        if fract(m.p.real_value) == 0.0 {
+            let int_pow = i32(m.p.real_value);
+
+            if int_pow < 0 {
+                return EXP_NEG_INT;
+            }
+            return EXP_POS_INT;
+        }
+        return EXP_REAL;
+    }
+    return EXP_COMPLEX;
 }
 
 fn fractal(params: FractalParams) -> FractalResult {
@@ -111,13 +145,82 @@ fn fractal(params: FractalParams) -> FractalResult {
 
     let r_squared = material.escape_radius * material.escape_radius;
 
-    var i: u32;
-    for (i = 0u; i < material.iteration_count; i += 1u) {
-        z = complex_pow(z, p) + c;
+    var i: u32 = 0;
+
+    // if starting z is 0, there can be a lot of issues with exponentioation 
+    // blowing up
+    // so we just do a dummy iteration
+    if z.x == 0 && z.y == 0.0 {
+        z = c;
 
         if z.x * z.x + z.y * z.y > r_squared {
-            break;
+            out.exit_iteration = i;
+            out.final_z = z;
+            return out;
         }
+        if material.iteration_count > 0 {
+            i += 1u;
+        }
+    }
+
+    // hoisting all the branches out of the loop
+    switch params.exp_mode {
+        case EXP_2 {
+            for (; i < material.iteration_count; i += 1u) {
+                z = complex_square(z) + c;
+
+                if z.x * z.x + z.y * z.y > r_squared {
+                    break;
+                }
+            }
+        }
+        case EXP_0 {
+            for (; i < material.iteration_count; i += 1u) {
+                let z_is_zero = z.x == 0.0 && z.y == 0.0;
+                z = vec2(f32(!z_is_zero), 0.0) + c;
+
+                if z.x * z.x + z.y * z.y > r_squared {
+                    break;
+                }
+            }
+        }
+        case EXP_POS_INT {
+            for (; i < material.iteration_count; i += 1u) {
+                z = complex_pow_pos_int(z, u32(p.x)) + c;
+
+                if z.x * z.x + z.y * z.y > r_squared {
+                    break;
+                }
+            }
+        }
+        case EXP_NEG_INT {
+            for (; i < material.iteration_count; i += 1u) {
+                z = complex_pow_neg_int(z, i32(p.x)) + c;
+
+                if z.x * z.x + z.y * z.y > r_squared {
+                    break;
+                }
+            }
+        }
+        case EXP_REAL {
+            for (; i < material.iteration_count; i += 1u) {
+                z = complex_pow_real(z, p.x) + c;
+
+                if z.x * z.x + z.y * z.y > r_squared {
+                    break;
+                }
+            }
+        }
+        case EXP_COMPLEX {
+            for (; i < material.iteration_count; i += 1u) {
+                z = complex_pow_complex(z, p) + c;
+
+                if z.x * z.x + z.y * z.y > r_squared {
+                    break;
+                }
+            }
+        }
+        default: {}
     }
 
     out.exit_iteration = i;
@@ -156,22 +259,6 @@ fn hsv2rgb(hsv: vec3f) -> vec3f {
     return hsv.b * mix(k.rrr, saturate(p - k.rrr), hsv.g);
 }
 
-fn complex_pow(z: vec2f, p: vec2f) -> vec2f {
-    if p.x == 2.0 && p.y == 0.0 {
-        // square
-        return complex_square(z);
-    } else if p.y == 0.0 && fract(p.x) == 0.0 && abs(p.x) <= 32 {
-        // real int power 
-        let int_p = i32(p.x);
-        return complex_pow_real_by_squaring(z, int_p);
-    } else if p.y == 0 {
-        // real 
-        return complex_pow_real(z, p.x);
-    }
-
-    return complex_pow_complex(z, p);
-}
-
 fn complex_pow_complex(z: vec2f, p: vec2f) -> vec2f {
     if z.x == 0.0 && z.y == 0.0 {
         return z;
@@ -186,55 +273,37 @@ fn complex_exp(z: vec2f) -> vec2f {
     return complex_from_polar(vec2(exp(z.x), z.y));
 }
 
-fn float_is_inf(a: f32) -> bool {
-    return abs(a) > LARGE_FLOAT;
-}
-
-fn float_is_nan(a: f32) -> bool {
-    return a != a;
-}
-
 fn complex_ln(z: vec2f) -> vec2f {
     var polar = complex_to_polar(z);
-
-    if polar.x == 0 {
-        return vec2(-LARGE_FLOAT, polar.y);
-    }
 
     return vec2(log(polar.x), polar.y);
 }
 
 fn complex_pow_real(z: vec2f, p: f32) -> vec2f {
-    if p == 0 {
-        return vec2f(1.0, 0.0);
-    }
-
     let polar = complex_to_polar(z);
+
     return complex_from_polar(vec2(pow(polar.x, p), polar.y * p));
 }
 
-fn complex_pow_real_by_squaring(z: vec2f, p: i32) -> vec2f {
+fn complex_pow_pos_int(z: vec2f, p: u32) -> vec2f {
     var x = z;
     var n = p;
 
-    if n == 0 {
-        return vec2f(1.0, 0.0);
-    }
-    if n < 0 {
-        x = complex_inv(x);
-        n = -n;
-    }
     var y = vec2f(1.0, 0.0);
     while n > 1 {
         if n % 2 == 1 {
             y = complex_mult(x, y);
-            n -= 1;
+            n -= 1u;
         }
         x = complex_square(x);
-        n /= 2;
+        n /= 2u;
     }
 
     return complex_mult(x, y);
+}
+
+fn complex_pow_neg_int(z: vec2f, p: i32) -> vec2f {
+    return complex_pow_pos_int(complex_inv(z), u32(-p));
 }
 
 fn complex_square(z: vec2f) -> vec2f {
@@ -245,6 +314,10 @@ fn complex_square(z: vec2f) -> vec2f {
 }
 
 fn complex_to_polar(z: vec2f) -> vec2f {
+    // if z.x == 0.0 && z.y == 0.0 {
+    //     return z;
+    // }
+
     return vec2(length(z), atan2(z.y, z.x));
 }
 
@@ -259,7 +332,10 @@ fn complex_mult(a: vec2f, b: vec2f) -> vec2f {
 }
 
 fn complex_inv(z: vec2f) -> vec2f {
-    let norm_sqr = z.x * z.x + z.y * z.y;
+    var norm_sqr = z.x * z.x + z.y * z.y;
+    // if norm_sqr == 0.0 {
+    //     return z;
+    // }
 
     return vec2(z.x / norm_sqr, -z.y / norm_sqr);
 }
