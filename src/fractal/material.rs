@@ -1,3 +1,5 @@
+use super::{parameters::ComplexParameter, Fractal};
+use crate::fractal::parameters::Parameter;
 use bevy::{
     asset::RenderAssetUsages,
     ecs::query::QuerySingleError,
@@ -14,10 +16,9 @@ use bevy::{
     },
     sprite::{AlphaMode2d, Material2d, Material2dKey, Material2dPlugin},
 };
+use shader_float::EncodeShaderFloat;
 
-use crate::fractal::parameters::Parameter;
-
-use super::{parameters::ComplexParameter, Fractal};
+mod shader_float;
 
 const FRACTAL_SHADER_HANDLE: Handle<Shader> =
     Handle::weak_from_u128(0xca66eb26_69e9_4e00_8760_ba2d0019c452);
@@ -45,8 +46,8 @@ impl Plugin for FractalMaterialPlugin {
                 )
             });
         }
-        app.add_plugins(Material2dPlugin::<FractalMaterial>::default());
-        app.add_systems(PostUpdate, update_fractal_material);
+        app.add_plugins(Material2dPlugin::<FractalMaterial<f32>>::default());
+        app.add_systems(PostUpdate, update_fractal_material::<f32>);
     }
 }
 
@@ -63,25 +64,31 @@ pub fn create_fractal_mesh() -> Mesh {
 }
 
 #[derive(Debug, Clone, Copy, Asset, TypePath, AsBindGroup, ShaderType)]
-#[uniform(0, FractalMaterial)] // it's its own uniform
-pub struct FractalMaterial {
-    iteration_count: u32,
-    scale: f32,
-    offset: Vec2,
-    initial_z: EncodedComplexParameter,
-    c: EncodedComplexParameter,
-    p: EncodedComplexParameter,
-    escape_radius: f32,
+pub struct FractalMaterial<FP: EncodeShaderFloat> {
+    #[uniform(0)]
+    uniform: MaterialUniform<FP>,
 }
 
-impl Default for FractalMaterial {
+#[derive(Debug, Clone, Copy, ShaderType)]
+struct MaterialUniform<FP: EncodeShaderFloat> {
+    iteration_count: u32,
+    scale: FP::EncodedFp,
+    offset: FP::EncodedVec2,
+    initial_z: EncodedComplexParameter<FP>,
+    c: EncodedComplexParameter<FP>,
+    p: EncodedComplexParameter<FP>,
+    escape_radius: FP::EncodedFp,
+}
+
+impl<FP: EncodeShaderFloat> Default for FractalMaterial<FP> {
     fn default() -> Self {
         Fractal::default().into()
     }
 }
 
-impl Material2d for FractalMaterial {
+impl<FP: EncodeShaderFloat + Clone> Material2d for FractalMaterial<FP> {
     fn vertex_shader() -> ShaderRef {
+        // TODO: Figure out how to set shader defs on f64 and f32
         if cfg!(debug_assertions) {
             ShaderRef::Path("shaders/fractal.wgsl".into())
         } else {
@@ -127,33 +134,35 @@ impl Material2d for FractalMaterial {
 }
 
 // This is needed for shader type derives
-impl From<&FractalMaterial> for FractalMaterial {
-    fn from(value: &FractalMaterial) -> Self {
+impl<FP: EncodeShaderFloat> From<&FractalMaterial<FP>> for FractalMaterial<FP> {
+    fn from(value: &FractalMaterial<FP>) -> Self {
         *value
     }
 }
 
-impl From<Fractal> for FractalMaterial {
+impl<FP: EncodeShaderFloat> From<Fractal> for FractalMaterial<FP> {
     fn from(fractal: Fractal) -> Self {
         Self {
-            iteration_count: fractal.iteration_count,
-            scale: fractal.scale,
-            escape_radius: fractal.escape_radius,
-            offset: fractal.offset,
-            initial_z: encode_complex_parameter(
-                fractal.initial_z,
-                Z_R_VALUE_INDEX,
-                Z_I_VALUE_INDEX,
-            ),
-            c: encode_complex_parameter(fractal.c, C_R_VALUE_INDEX, C_I_VALUE_INDEX),
-            p: encode_complex_parameter(fractal.p, P_R_VALUE_INDEX, P_I_VALUE_INDEX),
+            uniform: MaterialUniform {
+                iteration_count: fractal.iteration_count,
+                scale: FP::encode_f64(fractal.scale),
+                escape_radius: FP::encode_f64(fractal.escape_radius),
+                offset: FP::encode_vec2(fractal.offset),
+                initial_z: encode_complex_parameter(
+                    fractal.initial_z,
+                    Z_R_VALUE_INDEX,
+                    Z_I_VALUE_INDEX,
+                ),
+                c: encode_complex_parameter(fractal.c, C_R_VALUE_INDEX, C_I_VALUE_INDEX),
+                p: encode_complex_parameter(fractal.p, P_R_VALUE_INDEX, P_I_VALUE_INDEX),
+            },
         }
     }
 }
 
-pub fn update_fractal_material(
-    query: Query<(&Fractal, &MeshMaterial2d<FractalMaterial>), Changed<Fractal>>,
-    mut materials: ResMut<Assets<FractalMaterial>>,
+pub fn update_fractal_material<FP: EncodeShaderFloat>(
+    query: Query<(&Fractal, &MeshMaterial2d<FractalMaterial<FP>>), Changed<Fractal>>,
+    mut materials: ResMut<Assets<FractalMaterial<FP>>>,
 ) {
     let (fractal, material) = match query.get_single() {
         Ok(value) => value,
@@ -171,26 +180,26 @@ pub fn update_fractal_material(
 }
 
 #[derive(Debug, Clone, Copy, ShaderType)]
-struct EncodedComplexParameter {
-    real_value: f32,
+struct EncodedComplexParameter<FP: EncodeShaderFloat> {
+    real_value: FP::EncodedFp,
     real_index: u32,
-    imag_value: f32,
+    imag_value: FP::EncodedFp,
     imag_index: u32,
 }
 
 #[derive(Debug, Clone, Copy, ShaderType)]
-struct EncodedParameter {
-    value: f32,
+struct EncodedParameter<FP: EncodeShaderFloat> {
+    value: FP::EncodedFp,
     index: u32,
 }
 
-fn encode_complex_parameter(
+fn encode_complex_parameter<FP: EncodeShaderFloat>(
     param: ComplexParameter,
     real_index: u32,
     imag_index: u32,
-) -> EncodedComplexParameter {
-    let real = encode_parameter(param.real, real_index);
-    let imaginary = encode_parameter(param.imaginary, imag_index);
+) -> EncodedComplexParameter<FP> {
+    let real = encode_parameter::<FP>(param.real, real_index);
+    let imaginary = encode_parameter::<FP>(param.imaginary, imag_index);
     EncodedComplexParameter {
         real_value: real.value,
         real_index: real.index,
@@ -199,18 +208,21 @@ fn encode_complex_parameter(
     }
 }
 
-fn encode_parameter(param: Parameter, value_index: u32) -> EncodedParameter {
+fn encode_parameter<FP: EncodeShaderFloat>(
+    param: Parameter,
+    value_index: u32,
+) -> EncodedParameter<FP> {
     match param {
         Parameter::Value(c) => EncodedParameter {
-            value: c,
+            value: FP::encode_f64(c),
             index: value_index,
         },
         Parameter::PixelX => EncodedParameter {
-            value: 0.0,
+            value: FP::encode_f64(0.0),
             index: PIXEL_X_INDEX,
         },
         Parameter::PixelY => EncodedParameter {
-            value: 0.0,
+            value: FP::encode_f64(0.0),
             index: PIXEL_Y_INDEX,
         },
     }

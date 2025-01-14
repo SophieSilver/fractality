@@ -1,6 +1,6 @@
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Parameter {
-    Value(f32),
+    Value(f64),
     PixelX,
     PixelY,
 }

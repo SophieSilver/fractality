@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{math::DVec2, prelude::*};
 use material::{create_fractal_mesh, FractalMaterial, FractalMaterialPlugin};
 use parameters::{ComplexParameter, Parameter};
 
@@ -18,9 +18,9 @@ impl Plugin for FractalPlugin {
 #[derive(Debug, Clone, Copy, PartialEq, Component)]
 pub struct Fractal {
     pub iteration_count: u32,
-    pub scale: f32,
-    pub escape_radius: f32,
-    pub offset: Vec2,
+    pub scale: f64,
+    pub escape_radius: f64,
+    pub offset: DVec2,
     pub initial_z: ComplexParameter,
     pub c: ComplexParameter,
     pub p: ComplexParameter,
@@ -32,7 +32,7 @@ impl Default for Fractal {
             iteration_count: 100,
             scale: 2.0,
             escape_radius: 2.0,
-            offset: Vec2::ZERO,
+            offset: DVec2::ZERO,
             initial_z: default(),
             c: ComplexParameter {
                 real: Parameter::PixelX,
@@ -49,7 +49,7 @@ impl Default for Fractal {
 pub fn add_fractal_to_world(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<FractalMaterial>>,
+    mut materials: ResMut<Assets<FractalMaterial<f32>>>,
 ) {
     let mesh = meshes.add(create_fractal_mesh());
     let material = materials.add(FractalMaterial::default());

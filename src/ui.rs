@@ -11,7 +11,7 @@ pub mod num_input;
 pub mod parameter;
 
 const UI_SCALE: f32 = 1.25;
-const DRAG_SENSITIVITY: f32 = 0.0025;
+const DRAG_SENSITIVITY: f64 = 0.0025;
 const ITER_COUNT_SENSITIVITY_COEF: f32 = 0.0075;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

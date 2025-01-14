@@ -7,7 +7,7 @@ use bevy::{
         ButtonInput,
     },
     log::error,
-    math::{ops::exp2, vec2, Vec2},
+    math::{dvec2, DVec2},
     prelude::*,
     window::{PrimaryWindow, Window},
 };
@@ -16,9 +16,9 @@ use crate::{compositing::ViewportCamera, ui::UiSystemSet};
 
 use crate::fractal::Fractal;
 
-const PIXELS_PER_LINE: f32 = 12.0;
-const PIXELS_PER_HALF_SCALE: f32 = 50.0;
-const EPSILON: f32 = 0.0001;
+const PIXELS_PER_LINE: f64 = 12.0;
+const PIXELS_PER_HALF_SCALE: f64 = 50.0;
+const EPSILON: f64 = 0.0001;
 
 pub struct FractalInputPlugin;
 
@@ -31,10 +31,10 @@ impl Plugin for FractalInputPlugin {
 
 #[derive(Debug, Clone, Copy, Default)]
 struct DragState {
-    start_cursor_pos: Vec2,
+    start_cursor_pos: DVec2,
     // used to avoid editing the fractal when holding the mouse in place
-    previous_cursor_pos: Vec2,
-    start_offest: Vec2,
+    previous_cursor_pos: DVec2,
+    start_offest: DVec2,
 }
 
 #[derive(Debug, Clone, Copy, Resource, Default)]
@@ -60,18 +60,20 @@ pub fn fractal_input_system(
         error!("Failed to get the camera rect");
         return;
     };
-    let viewport_size = camera_rect.size();
-    let pixels_per_unit = f32::max(viewport_size.x, viewport_size.y) / 2.0;
+    let viewport_size = DVec2::from(camera_rect.size());
+    let pixels_per_unit = f64::max(viewport_size.x, viewport_size.y) / 2.0;
 
     if mouse_buttons.just_released(MouseButton::Left) {
         state.drag_state = None;
     }
 
-    let Some(cursor_pos) = window.cursor_position() else {
+    let Some(cursor_pos_f32) = window.cursor_position() else {
         return;
     };
 
-    if mouse_buttons.just_pressed(MouseButton::Left) && camera_rect.contains(cursor_pos) {
+    let cursor_pos = DVec2::from(cursor_pos_f32);
+
+    if mouse_buttons.just_pressed(MouseButton::Left) && camera_rect.contains(cursor_pos_f32) {
         state.drag_state = Some(DragState {
             start_cursor_pos: cursor_pos,
             previous_cursor_pos: cursor_pos,
@@ -94,14 +96,14 @@ pub fn fractal_input_system(
 
             // multiplying by (1.0, -1.0) because the cursor position uses different y axis
             let fractal = &mut *fractal;
-            let scaled_delta = (total_delta * vec2(1.0, -1.0) / pixels_per_unit) * fractal.scale;
+            let scaled_delta = (total_delta * dvec2(1.0, -1.0) / pixels_per_unit) * fractal.scale;
 
             fractal.offset = drag_state.start_offest + scaled_delta;
             drag_state.previous_cursor_pos = cursor_pos;
         }
     }
 
-    let scroll_amount = mouse_wheel.delta.y;
+    let scroll_amount = mouse_wheel.delta.y as f64;
     if scroll_amount.abs() > 0.001 {
         let pixels_scrolled = match mouse_wheel.unit {
             MouseScrollUnit::Line => lines_to_pixels(scroll_amount),
@@ -110,16 +112,16 @@ pub fn fractal_input_system(
 
         // preserve cursor world position
         let cursor_centered_pos = cursor_pos - viewport_size / 2.0;
-        let cursor_normalized_pos = cursor_centered_pos * vec2(1.0, -1.0) / pixels_per_unit;
+        let cursor_normalized_pos = cursor_centered_pos * dvec2(1.0, -1.0) / pixels_per_unit;
 
         let cursor_world_pos = cursor_normalized_pos * fractal.scale + fractal.offset;
-        fractal.scale *= exp2(-pixels_scrolled / PIXELS_PER_HALF_SCALE);
+        fractal.scale *= f64::exp2(-pixels_scrolled / PIXELS_PER_HALF_SCALE);
         // if we rearrange the cursor_world pos equation we get this
         // offset cursor_world_pos - cursor_normalized_pos * scale
         fractal.offset = cursor_world_pos - cursor_normalized_pos * fractal.scale;
     }
 }
 
-fn lines_to_pixels(lines: f32) -> f32 {
+fn lines_to_pixels(lines: f64) -> f64 {
     lines * PIXELS_PER_LINE
 }
