@@ -25,27 +25,31 @@ const EXP_COMPLEX: u32 = 5;
 /// Floating point type, either f32 or f64
 alias fp = f32;
 
-struct ComplexParameter {
+struct EncodedComplexParameter {
     real_value: f32,
     real_index: u32,
     imag_value: f32,
     imag_index: u32,
 }
+alias ComplexParameter = EncodedComplexParameter;
 
-struct Parameter {
-    value: fp,
+struct EncodedParameter {
+    value: f32,
     index: u32,
 }
+alias Parameter = EncodedParameter;
 
-struct FractalMaterial {
+struct EncodedFractalMaterial {
     iteration_count: u32,
     scale: f32,
     offset: vec2<f32>,
-    initial_z: ComplexParameter,
-    c: ComplexParameter,
-    p: ComplexParameter,
+    initial_z: EncodedComplexParameter,
+    c: EncodedComplexParameter,
+    p: EncodedComplexParameter,
     escape_radius: f32,
 }
+
+alias FractalMaterial = EncodedFractalMaterial;
 
 struct FractalVertexInput {
     @builtin(instance_index) index: u32,
@@ -66,10 +70,16 @@ struct FractalParams {
     z: vec2<fp>,
     c: vec2<fp>,
     p: vec2<fp>,
+    escape_radius: fp,
+    iteration_count: u32,
     exp_mode: u32,
 }
 
-@group(2) @binding(0) var<uniform> material: FractalMaterial;
+@group(2) @binding(0) var<uniform> encoded_material: EncodedFractalMaterial;
+
+fn decode_material() -> FractalMaterial {
+    return encoded_material;
+}
 
 @vertex
 fn vertex(in: FractalVertexInput) -> FragmentInput {
@@ -82,15 +92,17 @@ fn vertex(in: FractalVertexInput) -> FragmentInput {
 
 @fragment
 fn fragment(in: FragmentInput) -> @location(0) vec4f {
+    let material = decode_material();
+
     let x = fp(in.world_pos.x) * material.scale + material.offset.x;
     let y = fp(in.world_pos.y) * material.scale + material.offset.y;
-    let params = get_fractal_params(x, y);
+    let params = get_fractal_params(x, y, material);
     let res = fractal(params);
 
-    return vec4(fractal_res_to_color(res), 1.0);
+    return vec4(fractal_res_to_color(res, params), 1.0);
 }
 
-fn get_fractal_params(x: fp, y: fp) -> FractalParams {
+fn get_fractal_params(x: fp, y: fp, material: FractalMaterial) -> FractalParams {
     var param_array: array<fp, PARAM_ARRAY_SIZE>;
     param_array[Z_R_VALUE_INDEX] = material.initial_z.real_value;
     param_array[Z_I_VALUE_INDEX] = material.initial_z.imag_value;
@@ -110,11 +122,13 @@ fn get_fractal_params(x: fp, y: fp) -> FractalParams {
     out.p.y = param_array[material.p.imag_index];
 
     out.exp_mode = get_exp_mode(material);
+    out.escape_radius = material.escape_radius;
+    out.iteration_count = material.iteration_count;
 
     return out;
 }
 
-fn get_exp_mode(m: FractalMaterial) -> u32 {
+fn get_exp_mode(m: EncodedFractalMaterial) -> u32 {
     // if the exponent is constant
     if m.p.real_index == P_R_VALUE_INDEX && m.p.imag_index == P_I_VALUE_INDEX {
         if m.p.imag_value != 0 {
@@ -146,7 +160,7 @@ fn fractal(params: FractalParams) -> FractalResult {
     let p = params.p;
     var out: FractalResult;
 
-    let r_squared = material.escape_radius * material.escape_radius;
+    let r_squared = params.escape_radius * params.escape_radius;
 
     var i: u32 = 0;
 
@@ -161,7 +175,7 @@ fn fractal(params: FractalParams) -> FractalResult {
             out.final_z = z;
             return out;
         }
-        if material.iteration_count > 0 {
+        if params.iteration_count > 0 {
             i += 1u;
         }
     }
@@ -169,7 +183,7 @@ fn fractal(params: FractalParams) -> FractalResult {
     // hoisting all the branches out of the loop
     switch params.exp_mode {
         case EXP_2 {
-            for (; i < material.iteration_count; i += 1u) {
+            for (; i < params.iteration_count; i += 1u) {
                 z = complex_square(z) + c;
 
                 if z.x * z.x + z.y * z.y > r_squared {
@@ -178,7 +192,7 @@ fn fractal(params: FractalParams) -> FractalResult {
             }
         }
         case EXP_0 {
-            for (; i < material.iteration_count; i += 1u) {
+            for (; i < params.iteration_count; i += 1u) {
                 let z_is_zero = z.x == 0.0 && z.y == 0.0;
                 z = vec2(fp(!z_is_zero), 0.0) + c;
 
@@ -188,7 +202,7 @@ fn fractal(params: FractalParams) -> FractalResult {
             }
         }
         case EXP_POS_INT {
-            for (; i < material.iteration_count; i += 1u) {
+            for (; i < params.iteration_count; i += 1u) {
                 z = complex_pow_pos_int(z, u32(p.x)) + c;
 
                 if z.x * z.x + z.y * z.y > r_squared {
@@ -197,7 +211,7 @@ fn fractal(params: FractalParams) -> FractalResult {
             }
         }
         case EXP_NEG_INT {
-            for (; i < material.iteration_count; i += 1u) {
+            for (; i < params.iteration_count; i += 1u) {
                 z = complex_pow_neg_int(z, i32(p.x)) + c;
 
                 if z.x * z.x + z.y * z.y > r_squared {
@@ -206,7 +220,7 @@ fn fractal(params: FractalParams) -> FractalResult {
             }
         }
         case EXP_REAL {
-            for (; i < material.iteration_count; i += 1u) {
+            for (; i < params.iteration_count; i += 1u) {
                 z = complex_pow_real(z, p.x) + c;
 
                 if z.x * z.x + z.y * z.y > r_squared {
@@ -215,7 +229,7 @@ fn fractal(params: FractalParams) -> FractalResult {
             }
         }
         case EXP_COMPLEX {
-            for (; i < material.iteration_count; i += 1u) {
+            for (; i < params.iteration_count; i += 1u) {
                 z = complex_pow_complex(z, p) + c;
 
                 if z.x * z.x + z.y * z.y > r_squared {
@@ -231,19 +245,19 @@ fn fractal(params: FractalParams) -> FractalResult {
     return out;
 }
 
-fn fractal_res_to_color(res: FractalResult) -> vec3f {
+fn fractal_res_to_color(res: FractalResult, params: FractalParams) -> vec3f {
     // const escape_radius = 16.0;
     // const curve_exp = 1.0;
     const brightness_max_iter = fp(200.0);
 
     let x = res.final_z.x;
     let y = res.final_z.y;
-    let dist = (sqrt(x * x + y * y) - material.escape_radius) / (material.escape_radius * material.escape_radius / 4.0);
+    let dist = (sqrt(x * x + y * y) - params.escape_radius) / (params.escape_radius * params.escape_radius / 4.0);
     let value = fp(res.exit_iteration) + 1.0 - saturate(dist);
     let t = value / brightness_max_iter;
 
     var brightness = fp(0.0);
-    if res.exit_iteration == material.iteration_count {
+    if res.exit_iteration == params.iteration_count {
         brightness = fp(0.0);
     } else {
         // let curved_t = pow(t, curve_exp);
