@@ -22,34 +22,54 @@ const EXP_NEG_INT: u32 = 3;
 const EXP_REAL: u32 = 4;
 const EXP_COMPLEX: u32 = 5;
 
+#define DOUBLE_PRECISION
+
 /// Floating point type, either f32 or f64
+#ifndef DOUBLE_PRECISION
 alias fp = f32;
+#else
+alias fp = f64;
 
 struct EncodedComplexParameter {
-    real_value: f32,
+    // f64 is encoded as two u32s
+    real_value: vec2u,
     real_index: u32,
-    imag_value: f32,
+    imag_value: vec2u,
     imag_index: u32,
 }
-alias ComplexParameter = EncodedComplexParameter;
+#endif
 
-struct EncodedParameter {
-    value: f32,
-    index: u32,
+struct ComplexParameter {
+    real_value: fp,
+    real_index: u32,
+    imag_value: fp,
+    imag_index: u32,
 }
-alias Parameter = EncodedParameter;
 
+struct FractalMaterial {
+    iteration_count: u32,
+    scale: fp,
+    offset: vec2<fp>,
+    initial_z: ComplexParameter,
+    c: ComplexParameter,
+    p: ComplexParameter,
+    escape_radius: fp,
+}
+
+#ifndef DOUBLE_PRECISION
+// no encoding needed for f32
+alias EncodedFractalMaterial = FractalMaterial;
+#else
 struct EncodedFractalMaterial {
     iteration_count: u32,
-    scale: f32,
-    offset: vec2<f32>,
+    scale: vec2u,
+    offset: vec4u,
     initial_z: EncodedComplexParameter,
     c: EncodedComplexParameter,
     p: EncodedComplexParameter,
-    escape_radius: f32,
+    escape_radius: vec2u,
 }
-
-alias FractalMaterial = EncodedFractalMaterial;
+#endif
 
 struct FractalVertexInput {
     @builtin(instance_index) index: u32,
@@ -77,9 +97,50 @@ struct FractalParams {
 
 @group(2) @binding(0) var<uniform> encoded_material: EncodedFractalMaterial;
 
+#ifndef DOUBLE_PRECISION
 fn decode_material() -> FractalMaterial {
     return encoded_material;
 }
+#else
+fn decode_f64(encoded: vec2u) -> f64 {
+    let lo = encoded.x;
+    let hi = encoded.y;
+
+    let bits: u64 = u64(lo) | (u64(hi) << 32);
+    return bitcast<f64>(bits);
+}
+
+fn decode_complex_parameter(encoded: EncodedComplexParameter) -> ComplexParameter {
+    var out: ComplexParameter;
+
+    out.real_index = encoded.real_index;
+    out.imag_index = encoded.imag_index;
+    out.real_value = decode_f64(encoded.real_value);
+    out.imag_value = decode_f64(encoded.imag_value);
+
+    return out;
+}
+
+fn decode_vec2(encoded: vec4u) -> vec2<f64> {
+    let x = vec2(encoded.x, encoded.y);
+    let y = vec2(encoded.z, encoded.w);
+
+    return vec2(decode_f64(x), decode_f64(y));
+}
+
+fn decode_material() -> FractalMaterial {
+    var out: FractalMaterial;
+
+    out.iteration_count = encoded_material.iteration_count;
+    out.scale = decode_f64(encoded_material.scale);
+    out.escape_radius = decode_f64(encoded_material.escape_radius);
+    out.offset = decode_vec2(encoded_material.offset);
+    out.initial_z = decode_complex_parameter(encoded_material.initial_z);
+    out.c = decode_complex_parameter(encoded_material.c);
+    out.p = decode_complex_parameter(encoded_material.p);
+    return out;
+}
+#endif
 
 @vertex
 fn vertex(in: FractalVertexInput) -> FragmentInput {
@@ -128,7 +189,7 @@ fn get_fractal_params(x: fp, y: fp, material: FractalMaterial) -> FractalParams 
     return out;
 }
 
-fn get_exp_mode(m: EncodedFractalMaterial) -> u32 {
+fn get_exp_mode(m: FractalMaterial) -> u32 {
     // if the exponent is constant
     if m.p.real_index == P_R_VALUE_INDEX && m.p.imag_index == P_I_VALUE_INDEX {
         if m.p.imag_value != 0 {
@@ -285,8 +346,6 @@ fn complex_pow_complex(z: vec2<fp>, p: vec2<fp>) -> vec2<fp> {
 }
 
 fn complex_exp(z: vec2<fp>) -> vec2<fp> {
-    var a = z;
-
     return complex_from_polar(vec2(exp(z.x), z.y));
 }
 
