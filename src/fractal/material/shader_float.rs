@@ -15,6 +15,7 @@ use std::fmt::Debug;
 ///
 /// This can either truncate to f32 or turn f64 into bit representation
 pub trait EncodeShaderFloat: TypePath + Copy {
+    const IS_DOUBLE_PRECISION: bool = false;
     type EncodedFp: ShaderType + ShaderSize + Send + Sync + Copy + Debug + WriteInto;
     type EncodedVec2: ShaderType + ShaderSize + Send + Sync + Copy + Debug + WriteInto;
 
@@ -37,6 +38,8 @@ impl EncodeShaderFloat for f32 {
 }
 
 impl EncodeShaderFloat for f64 {
+    const IS_DOUBLE_PRECISION: bool = true;
+
     // we're gonna turn the f64 into bits
     // pack them into a vec2<u32> and in the shader we will
     // merge that into a u64 and bitcast into f64

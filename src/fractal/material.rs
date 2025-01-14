@@ -1,3 +1,5 @@
+use std::sync::OnceLock;
+
 use super::{parameters::ComplexParameter, Fractal};
 use crate::fractal::parameters::Parameter;
 use bevy::{
@@ -10,7 +12,7 @@ use bevy::{
             VertexAttributeValues, VertexBufferLayout,
         },
         render_resource::{
-            AsBindGroup, RenderPipelineDescriptor, ShaderRef, ShaderType,
+            AsBindGroup, RenderPipelineDescriptor, ShaderDefVal, ShaderRef, ShaderType,
             SpecializedMeshPipelineError, VertexAttribute, VertexFormat, VertexStepMode,
         },
     },
@@ -22,6 +24,11 @@ mod shader_float;
 
 const FRACTAL_SHADER_HANDLE: Handle<Shader> =
     Handle::weak_from_u128(0xca66eb26_69e9_4e00_8760_ba2d0019c452);
+
+const FRACTAL_SHADER_F64_HANDLE: Handle<Shader> =
+    Handle::weak_from_u128(0xb6eee0d8_4663_4c6c_8e23_db6d30527739);
+
+static TEMP_FRACTAL_SHADER_HANDLE: OnceLock<Handle<Shader>> = OnceLock::new();
 
 const Z_R_VALUE_INDEX: u32 = 0;
 const Z_I_VALUE_INDEX: u32 = 1;
@@ -37,17 +44,82 @@ pub struct FractalMaterialPlugin;
 
 impl Plugin for FractalMaterialPlugin {
     fn build(&self, app: &mut App) {
-        if !cfg!(debug_assertions) {
+        app.add_plugins((
+            Material2dPlugin::<FractalMaterial<f32>>::default(),
+            Material2dPlugin::<FractalMaterial<f64>>::default(),
+        ));
+        app.add_systems(
+            PostUpdate,
+            (
+                update_fractal_material::<f32>,
+                update_fractal_material::<f64>,
+            ),
+        );
+
+        if cfg!(debug_assertions) {
+            app.add_systems(Startup, load_temp_shader);
+            app.add_systems(
+                PreUpdate,
+                finalize_shader.run_if(on_event::<AssetEvent<Shader>>),
+            );
+        } else {
             let mut shaders = app.world_mut().resource_mut::<Assets<Shader>>();
-            shaders.get_or_insert_with(FRACTAL_SHADER_HANDLE.id(), || {
+            shaders.insert(
+                &FRACTAL_SHADER_HANDLE,
                 Shader::from_wgsl(
                     include_str!("../../assets/shaders/fractal.wgsl"),
-                    "assets/shaders/fractal.wgsl",
-                )
-            });
+                    "shaders/fractal.wgsl",
+                ),
+            );
+            shaders.insert(
+                &FRACTAL_SHADER_F64_HANDLE,
+                Shader::from_wgsl_with_defs(
+                    include_str!("../../assets/shaders/fractal.wgsl"),
+                    "shaders/fractal.wgsl",
+                    vec![ShaderDefVal::Bool("DOUBLE_PRECISION".into(), true)],
+                ),
+            );
         }
-        app.add_plugins(Material2dPlugin::<FractalMaterial<f32>>::default());
-        app.add_systems(PostUpdate, update_fractal_material::<f32>);
+    }
+}
+
+// load the temporary shader from the asset server for hot reloading
+pub fn load_temp_shader(asset_server: Res<AssetServer>) {
+    let shader = asset_server.load::<Shader>("shaders/fractal.wgsl");
+    TEMP_FRACTAL_SHADER_HANDLE.set(shader).unwrap();
+}
+
+// add deps to the loaded shader and store it in another handle
+// this allows us to add defs to the shader since you can't do that
+// in Material2d
+// it also allows us to update both f32 and f64 versions of the shader at the same time
+pub fn finalize_shader(
+    mut asset_events: EventReader<AssetEvent<Shader>>,
+    mut shaders: ResMut<Assets<Shader>>,
+) {
+    let Some(temp_handle) = TEMP_FRACTAL_SHADER_HANDLE.get() else {
+        return;
+    };
+
+    for event in asset_events.read().copied() {
+        use AssetEvent as E;
+        let (E::Modified { id } | E::LoadedWithDependencies { id }) = event else {
+            continue;
+        };
+        if id != temp_handle.id() {
+            continue;
+        }
+        let Some(mut temp_shader) = shaders.get(temp_handle).cloned() else {
+            warn!("Shader change detected but no shader in assets");
+            continue;
+        };
+
+        shaders.insert(&FRACTAL_SHADER_HANDLE, temp_shader.clone());
+        temp_shader
+            .shader_defs
+            .push(ShaderDefVal::Bool("DOUBLE_PRECISION".into(), true));
+
+        shaders.insert(&FRACTAL_SHADER_F64_HANDLE, temp_shader);
     }
 }
 
@@ -88,17 +160,16 @@ impl<FP: EncodeShaderFloat> Default for FractalMaterial<FP> {
 
 impl<FP: EncodeShaderFloat + Clone> Material2d for FractalMaterial<FP> {
     fn vertex_shader() -> ShaderRef {
-        // TODO: Figure out how to set shader defs on f64 and f32
-        if cfg!(debug_assertions) {
-            ShaderRef::Path("shaders/fractal.wgsl".into())
+        if FP::IS_DOUBLE_PRECISION {
+            ShaderRef::Handle(FRACTAL_SHADER_F64_HANDLE)
         } else {
             ShaderRef::Handle(FRACTAL_SHADER_HANDLE)
         }
     }
 
     fn fragment_shader() -> ShaderRef {
-        if cfg!(debug_assertions) {
-            ShaderRef::Path("shaders/fractal.wgsl".into())
+        if FP::IS_DOUBLE_PRECISION {
+            ShaderRef::Handle(FRACTAL_SHADER_F64_HANDLE)
         } else {
             ShaderRef::Handle(FRACTAL_SHADER_HANDLE)
         }

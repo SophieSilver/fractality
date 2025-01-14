@@ -22,8 +22,6 @@ const EXP_NEG_INT: u32 = 3;
 const EXP_REAL: u32 = 4;
 const EXP_COMPLEX: u32 = 5;
 
-#define DOUBLE_PRECISION
-
 /// Floating point type, either f32 or f64
 #ifndef DOUBLE_PRECISION
 alias fp = f32;
