@@ -11,7 +11,7 @@ const PIXEL_Y_INDEX: u32 = 7;
 
 const PARAM_ARRAY_SIZE: u32 = 16;
 
-const LARGE_FLOAT: f32 = 1e38;
+// const LARGE_FLOAT: f32 = 1e38;
 const MAX_INT_POW: u32 = 15;
 
 // Exponent modes
@@ -22,6 +22,9 @@ const EXP_NEG_INT: u32 = 3;
 const EXP_REAL: u32 = 4;
 const EXP_COMPLEX: u32 = 5;
 
+/// Floating point type, either f32 or f64
+alias fp = f32;
+
 struct ComplexParameter {
     real_value: f32,
     real_index: u32,
@@ -30,14 +33,14 @@ struct ComplexParameter {
 }
 
 struct Parameter {
-    value: f32,
+    value: fp,
     index: u32,
 }
 
 struct FractalMaterial {
     iteration_count: u32,
     scale: f32,
-    offset: vec2f,
+    offset: vec2<f32>,
     initial_z: ComplexParameter,
     c: ComplexParameter,
     p: ComplexParameter,
@@ -56,13 +59,13 @@ struct FragmentInput {
 
 struct FractalResult {
     exit_iteration: u32,
-    final_z: vec2f,
+    final_z: vec2<fp>,
 }
 
 struct FractalParams {
-    z: vec2f,
-    c: vec2f,
-    p: vec2f,
+    z: vec2<fp>,
+    c: vec2<fp>,
+    p: vec2<fp>,
     exp_mode: u32,
 }
 
@@ -79,16 +82,16 @@ fn vertex(in: FractalVertexInput) -> FragmentInput {
 
 @fragment
 fn fragment(in: FragmentInput) -> @location(0) vec4f {
-    let x = in.world_pos.x * material.scale + material.offset.x;
-    let y = in.world_pos.y * material.scale + material.offset.y;
+    let x = fp(in.world_pos.x) * material.scale + material.offset.x;
+    let y = fp(in.world_pos.y) * material.scale + material.offset.y;
     let params = get_fractal_params(x, y);
     let res = fractal(params);
 
     return vec4(fractal_res_to_color(res), 1.0);
 }
 
-fn get_fractal_params(x: f32, y: f32) -> FractalParams {
-    var param_array: array<f32, PARAM_ARRAY_SIZE>;
+fn get_fractal_params(x: fp, y: fp) -> FractalParams {
+    var param_array: array<fp, PARAM_ARRAY_SIZE>;
     param_array[Z_R_VALUE_INDEX] = material.initial_z.real_value;
     param_array[Z_I_VALUE_INDEX] = material.initial_z.imag_value;
     param_array[C_R_VALUE_INDEX] = material.c.real_value;
@@ -177,7 +180,7 @@ fn fractal(params: FractalParams) -> FractalResult {
         case EXP_0 {
             for (; i < material.iteration_count; i += 1u) {
                 let z_is_zero = z.x == 0.0 && z.y == 0.0;
-                z = vec2(f32(!z_is_zero), 0.0) + c;
+                z = vec2(fp(!z_is_zero), 0.0) + c;
 
                 if z.x * z.x + z.y * z.y > r_squared {
                     break;
@@ -230,27 +233,27 @@ fn fractal(params: FractalParams) -> FractalResult {
 
 fn fractal_res_to_color(res: FractalResult) -> vec3f {
     // const escape_radius = 16.0;
-    const curve_exp = 1.0;
-    const brightness_max_iter = 200.0;
+    // const curve_exp = 1.0;
+    const brightness_max_iter = fp(200.0);
 
     let x = res.final_z.x;
     let y = res.final_z.y;
     let dist = (sqrt(x * x + y * y) - material.escape_radius) / (material.escape_radius * material.escape_radius / 4.0);
-    let value = f32(res.exit_iteration) + 1.0 - saturate(dist);
+    let value = fp(res.exit_iteration) + 1.0 - saturate(dist);
     let t = value / brightness_max_iter;
 
-    var brightness = 0.0;
+    var brightness = fp(0.0);
     if res.exit_iteration == material.iteration_count {
-        brightness = 0.0;
+        brightness = fp(0.0);
     } else {
         // let curved_t = pow(t, curve_exp);
         let curved_t = t;
-        brightness = mix(0.001, 1.0, curved_t);
+        brightness = mix(fp(0.001), fp(1.0), curved_t);
     }
 
-    var color = hsv2rgb(vec3(value * 0.01 + 0.6, 1.0, 1.0));
+    var color = hsv2rgb(vec3(f32(value) * 0.01 + 0.6, 1.0, 1.0));
 
-    return color * brightness;
+    return color * f32(brightness);
 }
 
 fn hsv2rgb(hsv: vec3f) -> vec3f {
@@ -259,7 +262,7 @@ fn hsv2rgb(hsv: vec3f) -> vec3f {
     return hsv.b * mix(k.rrr, saturate(p - k.rrr), hsv.g);
 }
 
-fn complex_pow_complex(z: vec2f, p: vec2f) -> vec2f {
+fn complex_pow_complex(z: vec2<fp>, p: vec2<fp>) -> vec2<fp> {
     if z.x == 0.0 && z.y == 0.0 {
         return z;
     }
@@ -267,29 +270,29 @@ fn complex_pow_complex(z: vec2f, p: vec2f) -> vec2f {
     return complex_exp(complex_mult(p, complex_ln(z)));
 }
 
-fn complex_exp(z: vec2f) -> vec2f {
+fn complex_exp(z: vec2<fp>) -> vec2<fp> {
     var a = z;
 
     return complex_from_polar(vec2(exp(z.x), z.y));
 }
 
-fn complex_ln(z: vec2f) -> vec2f {
+fn complex_ln(z: vec2<fp>) -> vec2<fp> {
     var polar = complex_to_polar(z);
 
     return vec2(log(polar.x), polar.y);
 }
 
-fn complex_pow_real(z: vec2f, p: f32) -> vec2f {
+fn complex_pow_real(z: vec2<fp>, p: fp) -> vec2<fp> {
     let polar = complex_to_polar(z);
 
     return complex_from_polar(vec2(pow(polar.x, p), polar.y * p));
 }
 
-fn complex_pow_pos_int(z: vec2f, p: u32) -> vec2f {
+fn complex_pow_pos_int(z: vec2<fp>, p: u32) -> vec2<fp> {
     var x = z;
     var n = p;
 
-    var y = vec2f(1.0, 0.0);
+    var y = vec2<fp>(1.0, 0.0);
     while n > 1 {
         if n % 2 == 1 {
             y = complex_mult(x, y);
@@ -302,18 +305,18 @@ fn complex_pow_pos_int(z: vec2f, p: u32) -> vec2f {
     return complex_mult(x, y);
 }
 
-fn complex_pow_neg_int(z: vec2f, p: i32) -> vec2f {
+fn complex_pow_neg_int(z: vec2<fp>, p: i32) -> vec2<fp> {
     return complex_pow_pos_int(complex_inv(z), u32(-p));
 }
 
-fn complex_square(z: vec2f) -> vec2f {
+fn complex_square(z: vec2<fp>) -> vec2<fp> {
     let new_zr = z.x * z.x - z.y * z.y;
-    let new_zi = 2 * z.x * z.y;
+    let new_zi = 2.0 * z.x * z.y;
 
     return vec2(new_zr, new_zi);
 }
 
-fn complex_to_polar(z: vec2f) -> vec2f {
+fn complex_to_polar(z: vec2<fp>) -> vec2<fp> {
     // if z.x == 0.0 && z.y == 0.0 {
     //     return z;
     // }
@@ -321,17 +324,17 @@ fn complex_to_polar(z: vec2f) -> vec2f {
     return vec2(length(z), atan2(z.y, z.x));
 }
 
-fn complex_from_polar(polar: vec2f) -> vec2f {
+fn complex_from_polar(polar: vec2<fp>) -> vec2<fp> {
     return vec2(polar.x * cos(polar.y), polar.x * sin(polar.y));
 }
 
-fn complex_mult(a: vec2f, b: vec2f) -> vec2f {
+fn complex_mult(a: vec2<fp>, b: vec2<fp>) -> vec2<fp> {
     // (ar * iai) * (br * ibi) =
     // (ar * br) - ai * bi + (ar * ibi) + (iai * br)
     return vec2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
 }
 
-fn complex_inv(z: vec2f) -> vec2f {
+fn complex_inv(z: vec2<fp>) -> vec2<fp> {
     var norm_sqr = z.x * z.x + z.y * z.y;
     // if norm_sqr == 0.0 {
     //     return z;
