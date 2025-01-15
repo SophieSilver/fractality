@@ -1,5 +1,3 @@
-use std::sync::OnceLock;
-
 use super::{parameters::ComplexParameter, Fractal};
 use crate::fractal::parameters::Parameter;
 use bevy::{
@@ -12,7 +10,7 @@ use bevy::{
             VertexAttributeValues, VertexBufferLayout,
         },
         render_resource::{
-            AsBindGroup, RenderPipelineDescriptor, ShaderDefVal, ShaderRef, ShaderType,
+            AsBindGroup, RenderPipelineDescriptor, ShaderRef, ShaderType,
             SpecializedMeshPipelineError, VertexAttribute, VertexFormat, VertexStepMode,
         },
     },
@@ -21,14 +19,16 @@ use bevy::{
 use shader_float::EncodeShaderFloat;
 
 mod shader_float;
+#[cfg(debug_assertions)]
+mod shader_hot_reload;
+#[cfg(debug_assertions)]
+use shader_hot_reload::ShaderHotReloadPlugin;
 
 const FRACTAL_SHADER_HANDLE: Handle<Shader> =
     Handle::weak_from_u128(0xca66eb26_69e9_4e00_8760_ba2d0019c452);
 
 const FRACTAL_SHADER_F64_HANDLE: Handle<Shader> =
     Handle::weak_from_u128(0xb6eee0d8_4663_4c6c_8e23_db6d30527739);
-
-static TEMP_FRACTAL_SHADER_HANDLE: OnceLock<Handle<Shader>> = OnceLock::new();
 
 const Z_R_VALUE_INDEX: u32 = 0;
 const Z_I_VALUE_INDEX: u32 = 1;
@@ -56,13 +56,13 @@ impl Plugin for FractalMaterialPlugin {
             ),
         );
 
-        if cfg!(debug_assertions) {
-            app.add_systems(Startup, load_temp_shader);
-            app.add_systems(
-                PreUpdate,
-                finalize_shader.run_if(on_event::<AssetEvent<Shader>>),
-            );
-        } else {
+        #[cfg(debug_assertions)]
+        app.add_plugins(ShaderHotReloadPlugin);
+        
+        #[cfg(not(debug_assertions))]
+        {
+            use bevy::render::render_resource::ShaderDefVal;
+
             let mut shaders = app.world_mut().resource_mut::<Assets<Shader>>();
             shaders.insert(
                 &FRACTAL_SHADER_HANDLE,
@@ -80,46 +80,6 @@ impl Plugin for FractalMaterialPlugin {
                 ),
             );
         }
-    }
-}
-
-// load the temporary shader from the asset server for hot reloading
-pub fn load_temp_shader(asset_server: Res<AssetServer>) {
-    let shader = asset_server.load::<Shader>("shaders/fractal.wgsl");
-    TEMP_FRACTAL_SHADER_HANDLE.set(shader).unwrap();
-}
-
-// add deps to the loaded shader and store it in another handle
-// this allows us to add defs to the shader since you can't do that
-// in Material2d
-// it also allows us to update both f32 and f64 versions of the shader at the same time
-pub fn finalize_shader(
-    mut asset_events: EventReader<AssetEvent<Shader>>,
-    mut shaders: ResMut<Assets<Shader>>,
-) {
-    let Some(temp_handle) = TEMP_FRACTAL_SHADER_HANDLE.get() else {
-        return;
-    };
-
-    for event in asset_events.read().copied() {
-        use AssetEvent as E;
-        let (E::Modified { id } | E::LoadedWithDependencies { id }) = event else {
-            continue;
-        };
-        if id != temp_handle.id() {
-            continue;
-        }
-        let Some(mut temp_shader) = shaders.get(temp_handle).cloned() else {
-            warn!("Shader change detected but no shader in assets");
-            continue;
-        };
-
-        shaders.insert(&FRACTAL_SHADER_HANDLE, temp_shader.clone());
-        temp_shader
-            .shader_defs
-            .push(ShaderDefVal::Bool("DOUBLE_PRECISION".into(), true));
-
-        shaders.insert(&FRACTAL_SHADER_F64_HANDLE, temp_shader);
     }
 }
 

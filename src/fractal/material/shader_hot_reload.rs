@@ -6,9 +6,7 @@ pub struct ShaderHotReloadPlugin;
 
 impl Plugin for ShaderHotReloadPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(TempShaderAsset(Handle::weak_from_u128(
-            0x9af5fb1b_1b6a_40ad_b2e5_cd22da1129c3,
-        )));
+        app.insert_resource(TempShaderAsset(Handle::default()));
 
         app.add_systems(Startup, load_temp_shader);
         app.add_systems(
