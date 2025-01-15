@@ -21,6 +21,7 @@ const EXP_POS_INT: u32 = 2;
 const EXP_NEG_INT: u32 = 3;
 const EXP_REAL: u32 = 4;
 const EXP_COMPLEX: u32 = 5;
+const EXP_NEG_2: u32 = 6;
 
 /// Floating point type, either f32 or f64
 #ifndef DOUBLE_PRECISION
@@ -189,24 +190,25 @@ fn get_fractal_params(x: fp, y: fp, material: FractalMaterial) -> FractalParams 
 
 fn get_exp_mode(m: FractalMaterial) -> u32 {
     // if the exponent is constant
-    if m.p.real_index == P_R_VALUE_INDEX && m.p.imag_index == P_I_VALUE_INDEX {
-        if m.p.imag_value != 0 {
-            // TODO: maybe if it's only imaginary we could do some smart thing as well
-            return EXP_COMPLEX;
-        }
-        if m.p.real_value == 0.0 {
-            return EXP_0;
-        }
-        if m.p.real_value == 2.0 {
-            return EXP_2;
-        }
-        if fract(m.p.real_value) == 0.0 {
-            let int_pow = i32(m.p.real_value);
-
-            if int_pow < 0 {
-                return EXP_NEG_INT;
+    if m.p.imag_index == P_I_VALUE_INDEX && m.p.imag_value == 0.0 {
+        if m.p.real_index == P_R_VALUE_INDEX {
+            if m.p.real_value == 0.0 {
+                return EXP_0;
             }
-            return EXP_POS_INT;
+            if m.p.real_value == 2.0 {
+                return EXP_2;
+            }
+            if m.p.real_value == -2.0 {
+                return EXP_NEG_2;
+            }
+            if fract(m.p.real_value) == 0.0 {
+                let int_pow = i32(m.p.real_value);
+
+                if int_pow < 0 {
+                    return EXP_NEG_INT;
+                }
+                return EXP_POS_INT;
+            }
         }
         return EXP_REAL;
     }
@@ -246,6 +248,15 @@ fn fractal(params: FractalParams) -> FractalResult {
         case EXP_2 {
             for (; i < params.iteration_count; i += 1u) {
                 z = complex_square(z) + c;
+
+                if z.x * z.x + z.y * z.y > r_squared {
+                    break;
+                }
+            }
+        }
+        case EXP_NEG_2 {
+            for (; i < params.iteration_count; i += 1u) {
+                z = complex_inv_square(z) + c;
 
                 if z.x * z.x + z.y * z.y > r_squared {
                     break;
@@ -387,6 +398,11 @@ fn complex_square(z: vec2<fp>) -> vec2<fp> {
     let new_zi = 2.0 * z.x * z.y;
 
     return vec2(new_zr, new_zi);
+}
+
+fn complex_inv_square(z: vec2<fp>) -> vec2<fp> {
+    let inv_z = complex_inv(z);
+    return complex_square(inv_z);
 }
 
 fn complex_to_polar(z: vec2<fp>) -> vec2<fp> {
