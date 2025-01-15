@@ -238,7 +238,9 @@ fn fractal(params: FractalParams) -> FractalResult {
             i += 1u;
         }
     }
-
+    // TODO: maybe we should just use f32 in non integer exponents, since 
+    // casting to f32 and back is not making the result look any better
+    
     // hoisting all the branches out of the loop
     switch params.exp_mode {
         case EXP_2 {
@@ -344,19 +346,19 @@ fn complex_pow_complex(z: vec2<fp>, p: vec2<fp>) -> vec2<fp> {
 }
 
 fn complex_exp(z: vec2<fp>) -> vec2<fp> {
-    return complex_from_polar(vec2(exp(z.x), z.y));
+    return complex_from_polar(vec2(fp_exp(z.x), z.y));
 }
 
 fn complex_ln(z: vec2<fp>) -> vec2<fp> {
     var polar = complex_to_polar(z);
 
-    return vec2(log(polar.x), polar.y);
+    return vec2(fp_log(polar.x), polar.y);
 }
 
 fn complex_pow_real(z: vec2<fp>, p: fp) -> vec2<fp> {
     let polar = complex_to_polar(z);
 
-    return complex_from_polar(vec2(pow(polar.x, p), polar.y * p));
+    return complex_from_polar(vec2(fp_pow(polar.x, p), polar.y * p));
 }
 
 fn complex_pow_pos_int(z: vec2<fp>, p: u32) -> vec2<fp> {
@@ -392,11 +394,11 @@ fn complex_to_polar(z: vec2<fp>) -> vec2<fp> {
     //     return z;
     // }
 
-    return vec2(length(z), atan2(z.y, z.x));
+    return vec2(length(z), fp_atan2(z.y, z.x));
 }
 
 fn complex_from_polar(polar: vec2<fp>) -> vec2<fp> {
-    return vec2(polar.x * cos(polar.y), polar.x * sin(polar.y));
+    return vec2(polar.x * fp_cos(polar.y), polar.x * fp_sin(polar.y));
 }
 
 fn complex_mult(a: vec2<fp>, b: vec2<fp>) -> vec2<fp> {
@@ -412,4 +414,28 @@ fn complex_inv(z: vec2<fp>) -> vec2<fp> {
     // }
 
     return vec2(z.x / norm_sqr, -z.y / norm_sqr);
+}
+
+fn fp_sin(value: fp) -> fp {
+    return fp(sin(f32(value)));
+}
+
+fn fp_cos(value: fp) -> fp {
+    return fp(cos(f32(value)));
+}
+
+fn fp_atan2(y: fp, x: fp) -> fp {
+    return fp(atan2(f32(y), f32(x)));
+}
+
+fn fp_pow(x: fp, y: fp) -> fp {
+    return fp(pow(f32(x), f32(y)));
+}
+
+fn fp_log(x: fp) -> fp {
+    return fp(log(f32(x)));
+}
+
+fn fp_exp(x: fp) -> fp {
+    return fp(exp(f32(x)));
 }
