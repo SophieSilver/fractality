@@ -1,6 +1,6 @@
 use bevy::{input::mouse::AccumulatedMouseScroll, math::uvec2, prelude::*, window::PrimaryWindow};
 use bevy_egui::{
-    egui::{self, Frame, Grid, Margin, RichText, ScrollArea},
+    egui::{self, Frame, Grid, Margin, RichText, ScrollArea, Ui},
     EguiContext, EguiContextSettings, EguiContexts, EguiPlugin,
 };
 use num_input::show_num_input;
@@ -67,6 +67,10 @@ pub fn ui_system(
                 ui.separator();
 
                 Grid::new(ui.next_auto_id()).show(ui, |ui| {
+                    ui.label("Double Precision: ");
+                    show_checkbox(ui, fractal.reborrow().map_unchanged(|f| &mut f.use_f64));
+                    ui.end_row();
+
                     let current_iter_count = fractal.iteration_count;
                     // make iteration count more sensitive the larger it is
                     let iter_count_sensitivity =
@@ -137,4 +141,13 @@ fn egui_rect_to_urect(egui_rect: egui::Rect) -> bevy::math::URect {
     let min = uvec2(min.x as u32, min.y as u32);
     let max = uvec2(max.x as u32, max.y as u32);
     URect { min, max }
+}
+
+fn show_checkbox(ui: &mut Ui, mut value: Mut<bool>) {
+    let mut temp_value = *value;
+
+    ui.checkbox(&mut temp_value, "");
+    if temp_value != *value {
+        *value = temp_value;
+    }
 }
