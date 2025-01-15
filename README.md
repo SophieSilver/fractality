@@ -19,13 +19,14 @@ constant values or parametrized over the $X$ or $Y$ coordinates.
 
 ### Parameters
 
-| Prameter        | Description                                                                                                                                                                                |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Iteration Count | How many iterations to calculate. The higher the number, the more detailed the image, however, high iteration count might hurt performance or cause the application to crash.              |
-| Escape Radius   | If the iterated point crosses this radius, it is considered to be escaped.                                                                                                                 |
-| Initial Z       | $z_0$ at the start of the calculation.                                                                                                                                                     |
-| C               | $c$ at the start of the calculation.                                                                                                                                                       |
-| Exponent        | $p$ at the start of the calculation. <br> Note that exponents other than 2, non-integer exponents, or exponents having a non-zero imaginary component will be more expensive to calculate. |
+| Prameter         | Description                                                                                                                                                                                                                                          |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Double Precision | Enables double precision. Double precision lets you zoom in closer before you start seeing pixelization. However, enabling it will significantly hurt performance. Has less effect with complex and non-integer exponents due to Vulkan limitations. |
+| Iteration Count  | How many iterations to calculate. The higher the number, the more detailed the image, however, high iteration count might hurt performance or cause the application to crash.                                                                        |
+| Escape Radius    | If the iterated point crosses this radius, it is considered to be escaped.                                                                                                                                                                           |
+| Initial Z        | $z_0$ at the start of the calculation.                                                                                                                                                                                                               |
+| C                | $c$ at the start of the calculation.                                                                                                                                                                                                                 |
+| Exponent         | $p$ at the start of the calculation. <br> Note that exponents other than 2, non-integer exponents, or exponents having a non-zero imaginary component will be more expensive to calculate.                                                           |
 
 ## Interesting fractals
 
