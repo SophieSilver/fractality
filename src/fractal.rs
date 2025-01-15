@@ -1,21 +1,25 @@
 use bevy::{math::DVec2, prelude::*};
-use material::{create_fractal_mesh, FractalMaterial, FractalMaterialPlugin};
-use parameters::{ComplexParameter, Parameter};
 
 pub mod material;
 pub mod parameters;
+pub mod render;
+
+use material::FractalMaterialPlugin;
+use parameters::{ComplexParameter, Parameter};
+use render::{FractalRenderPlugin, FractalRenderer};
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct FractalPlugin;
 
 impl Plugin for FractalPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(FractalMaterialPlugin);
+        app.add_plugins((FractalMaterialPlugin, FractalRenderPlugin));
         app.add_systems(Startup, add_fractal_to_world);
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Component)]
+#[require(FractalRenderer)]
 pub struct Fractal {
     pub iteration_count: u32,
     pub scale: f64,
@@ -24,6 +28,7 @@ pub struct Fractal {
     pub initial_z: ComplexParameter,
     pub c: ComplexParameter,
     pub p: ComplexParameter,
+    pub use_f64: bool,
 }
 
 impl Default for Fractal {
@@ -42,17 +47,11 @@ impl Default for Fractal {
                 real: Parameter::Value(2.0),
                 imaginary: Parameter::Value(0.0),
             },
+            use_f64: false,
         }
     }
 }
 
-pub fn add_fractal_to_world(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<FractalMaterial<f32>>>,
-) {
-    let mesh = meshes.add(create_fractal_mesh());
-    let material = materials.add(FractalMaterial::default());
-
-    commands.spawn((Fractal::default(), Mesh2d(mesh), MeshMaterial2d(material)));
+pub fn add_fractal_to_world(mut commands: Commands) {
+    commands.spawn(Fractal::default());
 }

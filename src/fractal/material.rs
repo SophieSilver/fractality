@@ -1,14 +1,10 @@
 use super::{parameters::ComplexParameter, Fractal};
 use crate::fractal::parameters::Parameter;
 use bevy::{
-    asset::RenderAssetUsages,
     ecs::query::QuerySingleError,
     prelude::*,
     render::{
-        mesh::{
-            MeshVertexAttribute, MeshVertexBufferLayoutRef, PrimitiveTopology,
-            VertexAttributeValues, VertexBufferLayout,
-        },
+        mesh::{MeshVertexBufferLayoutRef, VertexBufferLayout},
         render_resource::{
             AsBindGroup, RenderPipelineDescriptor, ShaderRef, ShaderType,
             SpecializedMeshPipelineError, VertexAttribute, VertexFormat, VertexStepMode,
@@ -58,7 +54,7 @@ impl Plugin for FractalMaterialPlugin {
 
         #[cfg(debug_assertions)]
         app.add_plugins(ShaderHotReloadPlugin);
-        
+
         #[cfg(not(debug_assertions))]
         {
             use bevy::render::render_resource::ShaderDefVal;
@@ -81,18 +77,6 @@ impl Plugin for FractalMaterialPlugin {
             );
         }
     }
-}
-
-pub fn create_fractal_mesh() -> Mesh {
-    Mesh::new(
-        PrimitiveTopology::TriangleList,
-        RenderAssetUsages::RENDER_WORLD,
-    )
-    .with_inserted_attribute(
-        MeshVertexAttribute::new("FRACTAL_POSITION", 0, VertexFormat::Float32x2),
-        // a tri that will cover the entire viewport
-        VertexAttributeValues::Float32x2(vec![[-1.0, -1.0], [-1.0, 3.0], [3.0, -1.0]]),
-    )
 }
 
 #[derive(Debug, Clone, Copy, Asset, TypePath, AsBindGroup, ShaderType)]
