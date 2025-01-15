@@ -52,7 +52,7 @@ constant values or parametrized over the $X$ or $Y$ coordinates.
 
 ## Planned future features
 
-- [ ] Double precision
+- [x] Double precision
 - [ ] Coloring options
 - [ ] More equations
 - [ ] Display the path of a single point
