@@ -1,12 +1,12 @@
 use bevy::{input::mouse::AccumulatedMouseScroll, math::uvec2, prelude::*, window::PrimaryWindow};
 use bevy_egui::{
-    egui::{self, Frame, Grid, Margin, RichText, ScrollArea, Ui},
+    egui::{self, Checkbox, Color32, Frame, Grid, Margin, RichText, ScrollArea, Ui},
     EguiContext, EguiContextSettings, EguiContexts, EguiPlugin,
 };
 use num_input::show_num_input;
 use parameter::ComplexParameterInput;
 
-use crate::fractal::Fractal;
+use crate::fractal::{render::DoublePrecisionSupported, Fractal};
 pub mod num_input;
 pub mod parameter;
 
@@ -52,6 +52,7 @@ pub fn ui_system(
     mut contexts: EguiContexts,
     mut fractal: Query<&mut Fractal>,
     mut non_ui_area: ResMut<NonUiArea>,
+    f64_supported: Res<DoublePrecisionSupported>,
 ) {
     let Some(ctx) = contexts.try_ctx_mut() else {
         return;
@@ -67,8 +68,14 @@ pub fn ui_system(
                 ui.separator();
 
                 Grid::new(ui.next_auto_id()).show(ui, |ui| {
-                    ui.label("Double Precision: ");
-                    show_checkbox(ui, fractal.reborrow().map_unchanged(|f| &mut f.use_f64));
+                    ui.add_enabled_ui(f64_supported.0, |ui| {
+                        ui.label("Double Precision:");
+                        show_checkbox(ui, fractal.reborrow().map_unchanged(|f| &mut f.use_f64));
+                    })
+                    .response
+                    .on_disabled_hover_text(
+                        RichText::new("Unsupported on your device").color(Color32::LIGHT_RED),
+                    );
                     ui.end_row();
 
                     let current_iter_count = fractal.iteration_count;
@@ -145,8 +152,7 @@ fn egui_rect_to_urect(egui_rect: egui::Rect) -> bevy::math::URect {
 
 fn show_checkbox(ui: &mut Ui, mut value: Mut<bool>) {
     let mut temp_value = *value;
-
-    ui.checkbox(&mut temp_value, "");
+    ui.add(Checkbox::without_text(&mut temp_value));
     if temp_value != *value {
         *value = temp_value;
     }
